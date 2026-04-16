@@ -154,14 +154,52 @@
   <section class="reflect-card" aria-label="Daily reflection">
     <div class="card-head">Today's reflection</div>
     <p class="reflect-prompt" id="r-prompt">Find your chapter above and your reflection prompt will appear here.</p>
-    <textarea
-      id="r-text"
-      placeholder="Write a few thoughts after your session..."
-      aria-label="Reflection notes"
-    ></textarea>
+
+    <div class="textarea-wrap">
+      <textarea
+        id="r-text"
+        placeholder="Write a few thoughts after your session..."
+        aria-label="Reflection notes"
+      ></textarea>
+      <button
+        type="button"
+        class="mic-btn"
+        id="reflect-mic-btn"
+        aria-label="Speak your reflection"
+        title="Tap to speak"
+      >
+        <svg class="mic-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="9" y="2" width="6" height="11" rx="3" fill="currentColor"/>
+          <path d="M5 10a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Listening indicator for reflection -->
+    <div class="listening-bar" id="reflect-listening-bar" aria-live="polite">
+      <div class="listening-dots">
+        <div class="listening-dot"></div>
+        <div class="listening-dot"></div>
+        <div class="listening-dot"></div>
+      </div>
+      <span class="listening-text">Listening...</span>
+    </div>
+
     <div style="display:flex;align-items:center;">
       <button type="button" class="save-btn" id="save-reflect-btn">Save reflection</button>
       <span class="saved-ok" id="saved-ok" aria-live="polite">Saved.</span>
+    </div>
+  </section>
+
+  <!-- Reflection Journal -->
+  <div class="divider" aria-hidden="true"><span>journal</span></div>
+
+  <section class="log-card" aria-label="Reflection journal">
+    <div class="card-head">Your journal</div>
+    <div id="reflection-list">
+      <p class="log-empty">No reflections saved yet. Write something after your next session.</p>
     </div>
   </section>
 
