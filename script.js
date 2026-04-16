@@ -1,620 +1,527 @@
-/* The Right Chapter — script.js v9 */
+/* ═══════════════════════════════════════════
+   The Right Chapter — script.js
+   Version 2.0 · Stage 1: Screen router + shelf setup
+═══════════════════════════════════════════ */
+
 'use strict';
 
-/* ── State ── */
-const STORAGE_KEY = 'the_right_chapter_v1';
-let state = load();
-let current = null;
+/* ── Storage keys ── */
+const LIBRARY_KEY = 'trc_library';
+const STATE_KEY   = 'trc_state';
 
-function load() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const defaults = {
-      streak: 0, sessions: 0, mins: 0,
-      lastDate: null, markedDates: [], log: [], reflections: []
-    };
-    const parsed = raw ? JSON.parse(raw) : null;
-    if (!parsed) return defaults;
-    // migrate old object-format reflections to array
-    if (parsed.reflections && !Array.isArray(parsed.reflections)) {
-      parsed.reflections = Object.entries(parsed.reflections).map(([date, entry]) => ({
-        id:     date + '_migrated',
-        date,
-        time:   '',
-        text:   typeof entry === 'string' ? entry : (entry.text || ''),
-        book:   typeof entry === 'object' ? (entry.book   || null) : null,
-        author: typeof entry === 'object' ? (entry.author || null) : null,
-        page:   typeof entry === 'object' ? (entry.page   || null) : null,
-      }));
-    }
-    return Object.assign(defaults, parsed);
-  } catch (_) {
-    return {
-      streak: 0, sessions: 0, mins: 0,
-      lastDate: null, markedDates: [], log: [], reflections: []
-    };
+/* ── App state ── */
+let library  = null;
+let appState = null;
+let editReturnScreen = 'screen-oracle';
+
+/* ═══════════════════════════════════════════
+   SCREEN ROUTER
+═══════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+  const target = document.getElementById(id);
+  if (target) {
+    target.style.display = 'block';
+    window.scrollTo(0, 0);
   }
 }
 
-function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
-}
+/* ═══════════════════════════════════════════
+   INIT — runs on page load
+═══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  library  = loadLibrary();
+  appState = loadState();
 
-/* ── Helpers ── */
-function today() { return new Date().toISOString().split('T')[0]; }
+  wireButtons();
 
-function getSelected(groupId) {
-  const el = document.querySelector('#' + groupId + ' .pill.on');
-  return el ? el.dataset.v : '10';
-}
+  if (library && library.books && library.books.length >= 3) {
+    updateOracleShelfLabel();
+    renderStats();
+    showStats(true);
+    showScreen('screen-oracle');
+  } else if (library && library.books && library.books.length > 0) {
+    initShelfSetup(library.books);
+    showScreen('screen-shelf-setup');
+  } else {
+    showScreen('screen-landing');
+  }
+});
 
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-}
+/* ═══════════════════════════════════════════
+   WIRE ALL BUTTONS
+═══════════════════════════════════════════ */
+function wireButtons() {
 
-/* ── Pills ── */
-function initPills() {
-  document.querySelectorAll('.pills-inline').forEach(group => {
-    group.addEventListener('click', e => {
-      const pill = e.target.closest('.pill');
-      if (!pill) return;
-      group.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
-      pill.classList.add('on');
-    });
+  /* LANDING */
+  document.getElementById('landing-cta').addEventListener('click', () => {
+    initShelfSetup([]);
+    showScreen('screen-shelf-setup');
   });
-}
 
-/* ── Character counter ── */
-function initCharCount() {
-  const input = document.getElementById('oracle-input');
-  const counter = document.getElementById('char-count');
-  if (!input || !counter) return;
-  input.addEventListener('input', () => {
-    const remaining = 500 - input.value.length;
-    counter.textContent = remaining;
-    counter.style.color = remaining < 50 ? 'var(--brass)' : 'var(--ink-4)';
+  /* SHELF SETUP */
+  document.getElementById('add-book-btn').addEventListener('click', () => {
+    addBookRow('book-rows', onShelfRowChange);
+  });
+
+  document.getElementById('shelf-confirm-btn').addEventListener('click', () => {
+    const books = collectBooks('book-rows');
+    if (books.length < 3) return;
+    saveLibrary(books);
+    renderShelfDisplay(books, 'shelf-display');
+    showScreen('screen-shelf-confirm');
+  });
+
+  /* SHELF CONFIRM */
+  document.getElementById('confirm-oracle-btn').addEventListener('click', () => {
+    updateOracleShelfLabel();
+    showStats(false);
+    showScreen('screen-oracle');
+  });
+
+  document.getElementById('confirm-edit-btn').addEventListener('click', () => {
+    editReturnScreen = 'screen-shelf-confirm';
+    initEditShelf();
+    showScreen('screen-edit-shelf');
+  });
+
+  /* ORACLE INTAKE */
+  document.getElementById('oracle-input').addEventListener('input', onOracleInputChange);
+
+  document.getElementById('oracle-submit-btn').addEventListener('click', () => {
+    const input = document.getElementById('oracle-input').value.trim();
+    if (input.length < 5) return;
+    showScreen('screen-loading');
+    startLoadingMessages();
+    // Temporary placeholder — Stage 3 replaces this with the real API call
+    setTimeout(() => {
+      stopLoadingMessages();
+      showScreen('screen-oracle');
+    }, 3000);
+  });
+
+  document.getElementById('oracle-edit-shelf-btn').addEventListener('click', () => {
+    editReturnScreen = 'screen-oracle';
+    initEditShelf();
+    showScreen('screen-edit-shelf');
+  });
+
+  /* REVEAL CARD */
+  document.getElementById('rev-mark-btn').addEventListener('click', markRead);
+  document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
+
+  document.getElementById('ask-again-btn').addEventListener('click', () => {
+    document.getElementById('oracle-input').value = '';
+    document.getElementById('char-count').textContent = '';
+    updateOracleShelfLabel();
+    renderStats();
+    showStats(true);
+    showScreen('screen-oracle');
+  });
+
+  document.getElementById('reveal-edit-shelf-btn').addEventListener('click', () => {
+    editReturnScreen = 'screen-reveal';
+    initEditShelf();
+    showScreen('screen-edit-shelf');
+  });
+
+  /* EDIT SHELF */
+  document.getElementById('edit-add-book-btn').addEventListener('click', () => {
+    addBookRow('edit-book-rows', onEditRowChange);
+  });
+
+  document.getElementById('edit-save-btn').addEventListener('click', () => {
+    const books = collectBooks('edit-book-rows');
+    if (books.length < 3) return;
+    saveLibrary(books);
+    library = loadLibrary();
+    updateOracleShelfLabel();
+    showScreen(editReturnScreen);
+  });
+
+  document.getElementById('edit-cancel-btn').addEventListener('click', () => {
+    showScreen(editReturnScreen);
   });
 }
 
 /* ═══════════════════════════════════════════
-   initMic — push to talk
-   Tap once to start. Tap again to stop.
-   No silence timer. Simple and reliable.
-   Each instance is fully isolated.
+   SHELF SETUP
 ═══════════════════════════════════════════ */
-function initMic(micBtnId, inputId, listeningBarId) {
-  const micBtn = document.getElementById(micBtnId);
-  if (!micBtn) return;
+function initShelfSetup(existingBooks) {
+  const container = document.getElementById('book-rows');
+  container.innerHTML = '';
+  const seed = existingBooks.length > 0 ? existingBooks : [{}, {}, {}];
+  seed.forEach(b => addBookRow('book-rows', onShelfRowChange, b));
+  updateShelfProgress('book-rows', 'shelf-progress', 'shelf-confirm-btn');
+}
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+function addBookRow(containerId, onChange, prefill = {}) {
+  const container = document.getElementById(containerId);
+  const row = document.createElement('div');
+  row.className = 'book-row';
 
-  if (!SpeechRecognition) {
-    micBtn.style.display = 'none';
-    return;
+  const fmt = prefill.format || 'print';
+
+  row.innerHTML = `
+    <div class="book-row-fields">
+      <input
+        type="text"
+        class="book-title-input"
+        placeholder="Book title"
+        value="${escHtml(prefill.title || '')}"
+        aria-label="Book title"
+        autocomplete="off"
+      />
+      <input
+        type="text"
+        class="book-author-input"
+        placeholder="Author"
+        value="${escHtml(prefill.author || '')}"
+        aria-label="Author name"
+        autocomplete="off"
+      />
+    </div>
+    <div class="book-row-meta">
+      <div class="format-pills" role="group" aria-label="Format">
+        <button type="button" class="fmt-pill ${fmt === 'print' ? 'on' : ''}" data-fmt="print">📖 Print</button>
+        <button type="button" class="fmt-pill ${fmt === 'audio' ? 'on' : ''}" data-fmt="audio">🎧 Audio</button>
+        <button type="button" class="fmt-pill ${fmt === 'ebook' ? 'on' : ''}" data-fmt="ebook">📱 eBook</button>
+      </div>
+      <button type="button" class="remove-book-btn" aria-label="Remove book">×</button>
+    </div>
+  `;
+
+  row.querySelectorAll('.fmt-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      row.querySelectorAll('.fmt-pill').forEach(p => p.classList.remove('on'));
+      btn.classList.add('on');
+    });
+  });
+
+  row.querySelector('.remove-book-btn').addEventListener('click', () => {
+    row.remove();
+    onChange();
+  });
+
+  row.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', onChange);
+  });
+
+  container.appendChild(row);
+  onChange();
+
+  if (!prefill.title) {
+    row.querySelector('.book-title-input').focus();
   }
+}
 
-  let isListening    = false;
-  let fullTranscript = '';
-  let recog          = null;
-
-  /* ── show/hide listening bar ── */
-  function showBar(show) {
-    const bar = document.getElementById(listeningBarId);
-    if (!bar) return;
-    bar.classList.toggle('visible', show);
-  }
-
-  /* ── write text to target field ── */
-  function writeToField(text) {
-    const el = document.getElementById(inputId);
-    if (!el) return;
-    el.value = text;
-    if (inputId === 'oracle-input') {
-      const counter = document.getElementById('char-count');
-      if (counter) {
-        const rem = 500 - text.length;
-        counter.textContent = rem;
-        counter.style.color = rem < 50 ? 'var(--brass)' : 'var(--ink-4)';
-      }
-    }
-  }
-
-  /* ── stop and clean up ── */
-  function stopListening() {
-    isListening = false;
-    micBtn.classList.remove('listening');
-    showBar(false);
-    if (recog) {
-      try { recog.stop(); } catch (_) {}
-      recog = null;
-    }
-  }
-
-  /* ── start a recognition session ── */
-  function startListening() {
-    if (isListening) return;
-
-    // Seed fullTranscript from current field value so we append, not replace
-    const el = document.getElementById(inputId);
-    fullTranscript = el && el.value.trim() ? el.value.trim() : '';
-
-    const r = new SpeechRecognition();
-    r.continuous      = true;   // keep open until user taps stop
-    r.interimResults  = true;
-    r.lang            = 'en-US';
-    r.maxAlternatives = 1;
-
-    r.onstart = () => {
-      isListening = true;
-      micBtn.classList.add('listening');
-      showBar(true);
-    };
-
-    r.onresult = (e) => {
-      let finalChunk   = '';
-      let interimChunk = '';
-
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          finalChunk += e.results[i][0].transcript;
-        } else {
-          interimChunk += e.results[i][0].transcript;
-        }
-      }
-
-      if (finalChunk) {
-        fullTranscript += (fullTranscript ? ' ' : '') + finalChunk.trim();
-      }
-
-      const display = fullTranscript + (interimChunk ? ' ' + interimChunk : '');
-      if (display.trim()) writeToField(display);
-    };
-
-    r.onerror = (e) => {
-      console.warn('Speech recognition error:', e.error);
-      if (e.error === 'not-allowed') {
-        stopListening();
-        alert('Microphone access was denied. Please allow it in your browser settings.');
-      } else if (e.error === 'no-speech') {
-        // User paused — keep listening, don't stop
-      } else {
-        stopListening();
-      }
-    };
-
-    r.onend = () => {
-      // Only stop UI if user tapped to stop
-      // If still supposed to be listening, restart (handles browser auto-stop)
-      if (isListening) {
-        try {
-          r.start();
-        } catch (_) {
-          // If restart fails, create fresh instance
-          recog = null;
-          setTimeout(() => {
-            if (isListening) startListeningFresh();
-          }, 150);
-        }
-      } else {
-        stopListening();
-      }
-    };
-
-    recog = r;
-    try {
-      r.start();
-    } catch (err) {
-      console.warn('Could not start recognition:', err);
-      isListening = false;
-    }
-  }
-
-  /* ── fresh instance if restart fails ── */
-  function startListeningFresh() {
-    if (!isListening) return;
-    const el = document.getElementById(inputId);
-    fullTranscript = el && el.value.trim() ? el.value.trim() : '';
-
-    const r = new SpeechRecognition();
-    r.continuous     = true;
-    r.interimResults = true;
-    r.lang           = 'en-US';
-
-    r.onstart = () => { /* already showing UI */ };
-
-    r.onresult = (e) => {
-      let finalChunk = '';
-      let interimChunk = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) finalChunk += e.results[i][0].transcript;
-        else interimChunk += e.results[i][0].transcript;
-      }
-      if (finalChunk) fullTranscript += (fullTranscript ? ' ' : '') + finalChunk.trim();
-      const display = fullTranscript + (interimChunk ? ' ' + interimChunk : '');
-      if (display.trim()) writeToField(display);
-    };
-
-    r.onerror = () => { if (!isListening) stopListening(); };
-    r.onend   = () => { if (isListening) { try { r.start(); } catch(_) {} } else stopListening(); };
-
-    recog = r;
-    try { r.start(); } catch(_) { stopListening(); }
-  }
-
-  /* ── mic button: tap to start, tap to stop ── */
-  micBtn.addEventListener('click', () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-          .then(() => startListening())
-          .catch(() => {
-            alert('Please allow microphone access to use voice input.');
-          });
-      } else {
-        startListening();
-      }
+function collectBooks(containerId) {
+  const rows = document.querySelectorAll(`#${containerId} .book-row`);
+  const books = [];
+  rows.forEach(row => {
+    const title  = row.querySelector('.book-title-input').value.trim();
+    const author = row.querySelector('.book-author-input').value.trim();
+    const fmtBtn = row.querySelector('.fmt-pill.on');
+    const format = fmtBtn ? fmtBtn.dataset.fmt : 'print';
+    if (title && author) {
+      books.push({
+        id:      String(Date.now() + Math.random()),
+        title,
+        author,
+        format,
+        pages:   null,
+        addedAt: today()
+      });
     }
   });
+  return books;
 }
 
-/* ── Oracle API call ── */
-async function callOracle() {
-  const input    = document.getElementById('oracle-input');
-  const userText = input ? input.value.trim() : '';
+function onShelfRowChange() {
+  updateShelfProgress('book-rows', 'shelf-progress', 'shelf-confirm-btn');
+}
 
-  if (userText.length < 5) {
-    if (input) {
-      input.focus();
-      input.style.borderColor = 'var(--brass)';
-      setTimeout(() => { input.style.borderColor = ''; }, 2000);
-    }
-    return;
+function onEditRowChange() {
+  updateShelfProgress('edit-book-rows', 'edit-shelf-progress', 'edit-save-btn');
+}
+
+function updateShelfProgress(containerId, progressId, btnId) {
+  const books = collectBooks(containerId);
+  const count = books.length;
+  const progressEl = document.getElementById(progressId);
+  const btnEl      = document.getElementById(btnId);
+
+  if (count === 0) {
+    progressEl.textContent = '';
+    progressEl.className = 'shelf-progress';
+  } else if (count < 3) {
+    progressEl.textContent = `${count} book${count > 1 ? 's' : ''} added · need at least 3`;
+    progressEl.className = 'shelf-progress warn';
+  } else {
+    progressEl.textContent = `${count} book${count > 1 ? 's' : ''} on your shelf ✓`;
+    progressEl.className = 'shelf-progress ok';
   }
 
-  const btn     = document.getElementById('oracle-btn');
-  const loading = document.getElementById('oracle-loading');
-  const card    = document.getElementById('result-card');
+  if (btnEl) btnEl.disabled = count < 3;
+}
 
-  btn.disabled    = true;
-  btn.textContent = 'Listening...';
-  if (loading) loading.classList.add('visible');
-  if (card)    card.classList.remove('visible');
+/* ═══════════════════════════════════════════
+   EDIT SHELF
+═══════════════════════════════════════════ */
+function initEditShelf() {
+  const lib = loadLibrary();
+  const container = document.getElementById('edit-book-rows');
+  container.innerHTML = '';
+  const books = (lib && lib.books) ? lib.books : [];
+  if (books.length === 0) {
+    addBookRow('edit-book-rows', onEditRowChange);
+    addBookRow('edit-book-rows', onEditRowChange);
+    addBookRow('edit-book-rows', onEditRowChange);
+  } else {
+    books.forEach(b => addBookRow('edit-book-rows', onEditRowChange, b));
+  }
+  updateShelfProgress('edit-book-rows', 'edit-shelf-progress', 'edit-save-btn');
+}
 
-  try {
-    const response = await fetch('/api/oracle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userInput: userText })
-    });
+/* ═══════════════════════════════════════════
+   SHELF CONFIRMATION DISPLAY
+═══════════════════════════════════════════ */
+function renderShelfDisplay(books, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = books.map(b => `
+    <div class="shelf-item">
+      <span class="shelf-item-title">${escHtml(b.title)}</span>
+      <span class="shelf-item-author">${escHtml(b.author)}</span>
+      <span class="badge b-format-${escHtml(b.format)}">${formatLabel(b.format)}</span>
+    </div>
+  `).join('');
+}
 
-    const data = await response.json();
+/* ═══════════════════════════════════════════
+   ORACLE INTAKE
+═══════════════════════════════════════════ */
+function onOracleInputChange() {
+  const input   = document.getElementById('oracle-input');
+  const btn     = document.getElementById('oracle-submit-btn');
+  const counter = document.getElementById('char-count');
+  const len     = input.value.length;
 
-    if (!response.ok || !data.oracle) {
-      throw new Error(data.error || 'The oracle is resting.');
-    }
+  btn.disabled = len < 5;
 
-    const oracle = data.oracle;
-    const time   = parseInt(getSelected('g-time') || '10', 10);
-
-    current = {
-      id:               uid(),
-      title:            oracle.book,
-      author:           oracle.author,
-      page:             oracle.page,
-      time,
-      userInput:        userText,
-      mirror:           oracle.mirror,
-      name:             oracle.name,
-      offering:         oracle.offering,
-      whyThisFits:      oracle.whyThisFits,
-      singleStep:       oracle.singleStep,
-      reflectionPrompt: oracle.reflectionPrompt,
-    };
-
-    renderOracle(oracle, time);
-    logSession();
-
-  } catch (err) {
-    console.error('Oracle error:', err);
-    showError(err.message || 'Something went quiet. Please try again.');
-  } finally {
-    btn.disabled    = false;
-    btn.textContent = 'Find my chapter';
-    if (loading) loading.classList.remove('visible');
+  if (len > 20) {
+    counter.textContent    = `${len} / 500`;
+    counter.style.display  = 'block';
+  } else {
+    counter.style.display  = 'none';
   }
 }
 
-/* ── Render oracle response ── */
-function renderOracle(oracle, time) {
-  document.getElementById('r-mirror').textContent   = oracle.mirror           || '';
-  document.getElementById('r-name').textContent     = oracle.name             || '';
-  document.getElementById('r-offering').textContent = oracle.offering         || '';
-  document.getElementById('r-title').textContent    = oracle.book             || '';
-  document.getElementById('r-author').textContent   = oracle.author           || '';
-  document.getElementById('r-page').textContent     = oracle.page             || '';
-  document.getElementById('r-time').textContent     = time + ' min session';
-  document.getElementById('r-why').textContent      = oracle.whyThisFits      || '';
-  document.getElementById('r-step').textContent     = oracle.singleStep       || '';
-  document.getElementById('r-prompt').textContent   = oracle.reflectionPrompt || '';
-
-  // Reset mark-read for new session
-  const btn = document.getElementById('mark-btn');
-  const dne = document.getElementById('r-done');
-  btn.textContent = 'Mark read today';
-  btn.classList.remove('done');
-  dne.style.display = 'none';
-
-  // Clear reflection textarea
-  const rText = document.getElementById('r-text');
-  if (rText) rText.value = '';
-
-  const card = document.getElementById('result-card');
-  card.classList.add('visible');
-  setTimeout(() => {
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, 100);
+function updateOracleShelfLabel() {
+  const lib   = loadLibrary();
+  const count = (lib && lib.books) ? lib.books.length : 0;
+  const countEl = document.getElementById('oracle-shelf-count');
+  const labelEl = document.getElementById('oracle-shelf-label');
+  if (countEl) countEl.textContent = count;
+  if (labelEl) labelEl.textContent = `Your shelf · ${count} book${count !== 1 ? 's' : ''}`;
 }
 
-/* ── Error display ── */
-function showError(message) {
-  document.getElementById('r-mirror').textContent   = message;
-  document.getElementById('r-name').textContent     = '';
-  document.getElementById('r-offering').textContent = '';
-  document.getElementById('r-title').textContent    = '';
-  document.getElementById('r-author').textContent   = '';
-  document.getElementById('r-page').textContent     = '';
-  document.getElementById('r-time').textContent     = '';
-  document.getElementById('r-why').textContent      = '';
-  document.getElementById('r-step').textContent     = '';
-  document.getElementById('result-card').classList.add('visible');
+/* ═══════════════════════════════════════════
+   LOADING STATE
+═══════════════════════════════════════════ */
+const LOADING_MESSAGES = [
+  'Reading what you brought…',
+  'Moving through your shelf…',
+  'Something is aligning…',
+  'Your chapter is close…'
+];
+let loadingTimer = null;
+let loadingIndex = 0;
+
+function startLoadingMessages() {
+  loadingIndex = 0;
+  const msgEl = document.getElementById('loading-msg');
+  if (msgEl) msgEl.textContent = LOADING_MESSAGES[0];
+  loadingTimer = setInterval(() => {
+    loadingIndex = (loadingIndex + 1) % LOADING_MESSAGES.length;
+    if (msgEl) {
+      msgEl.style.opacity = '0';
+      setTimeout(() => {
+        msgEl.textContent   = LOADING_MESSAGES[loadingIndex];
+        msgEl.style.opacity = '1';
+      }, 300);
+    }
+  }, 1800);
 }
 
-/* ── Mark read ── */
+function stopLoadingMessages() {
+  if (loadingTimer) { clearInterval(loadingTimer); loadingTimer = null; }
+}
+
+/* ═══════════════════════════════════════════
+   REVEAL CARD
+═══════════════════════════════════════════ */
+function renderReveal(data) {
+  document.getElementById('rev-title').textContent      = data.title        || '';
+  document.getElementById('rev-author').textContent     = data.author       || '';
+  document.getElementById('rev-oracle-msg').textContent = data.oracleMessage || '';
+
+  const pageEl    = document.getElementById('rev-page');
+  const pageSubEl = document.getElementById('rev-page-sub');
+
+  if (data.pageRefType === 'number') {
+    pageEl.style.fontSize  = '';
+    pageEl.style.fontStyle = '';
+    pageEl.textContent     = data.pageRef;
+    pageSubEl.textContent  = 'suggested starting page';
+  } else {
+    pageEl.style.fontSize  = '22px';
+    pageEl.style.fontStyle = 'italic';
+    pageEl.textContent     = data.pageRef;
+    pageSubEl.textContent  = 'open here and let the page find you';
+  }
+
+  const badgeEl = document.getElementById('rev-format-badge');
+  badgeEl.textContent = formatLabel(data.format);
+  badgeEl.className   = `badge b-format-${data.format || 'print'}`;
+
+  const audibleEl = document.getElementById('rev-audible');
+  if (data.format === 'audio') {
+    const q = encodeURIComponent((data.title || '') + ' ' + (data.author || ''));
+    audibleEl.href         = `https://www.audible.com/search?keywords=${q}&tag=therightchap-20`;
+    audibleEl.style.display = 'block';
+  } else {
+    audibleEl.style.display = 'none';
+  }
+
+  const markBtn = document.getElementById('rev-mark-btn');
+  const doneEl  = document.getElementById('rev-done');
+  if (appState.markedDates && appState.markedDates.includes(today())) {
+    markBtn.textContent = 'Read today ✓';
+    markBtn.classList.add('done');
+    doneEl.style.display = 'inline';
+  } else {
+    markBtn.textContent = 'Mark read today';
+    markBtn.classList.remove('done');
+    doneEl.style.display = 'none';
+  }
+
+  document.getElementById('r-text').value        = '';
+  document.getElementById('saved-ok').style.display = 'none';
+
+  showScreen('screen-reveal');
+}
+
+/* ═══════════════════════════════════════════
+   MARK READ
+═══════════════════════════════════════════ */
 function markRead() {
   const td = today();
-  if (!current) return;
-
-  if (state.markedDates.includes(td)) {
-    const btn = document.getElementById('mark-btn');
-    btn.textContent = 'Read today ✓';
-    btn.classList.add('done');
-    document.getElementById('r-done').style.display = 'inline';
-    return;
-  }
-
-  state.markedDates.push(td);
+  if (appState.markedDates.includes(td)) return;
+  appState.markedDates.push(td);
 
   const yest = new Date();
   yest.setDate(yest.getDate() - 1);
   const yStr = yest.toISOString().split('T')[0];
 
-  if (state.lastDate === yStr) {
-    state.streak++;
-  } else if (state.lastDate !== td) {
-    state.streak = 1;
+  if (appState.lastDate === yStr) {
+    appState.streak++;
+  } else if (appState.lastDate !== td) {
+    appState.streak = 1;
   }
-  state.lastDate = td;
-
-  if (state.log.length) state.log[0].marked = true;
-
-  save();
+  appState.lastDate = td;
+  saveState();
   renderStats();
-  renderLog();
 
-  const btn = document.getElementById('mark-btn');
-  btn.textContent = 'Read today ✓';
-  btn.classList.add('done');
-  document.getElementById('r-done').style.display = 'inline';
+  document.getElementById('rev-mark-btn').textContent = 'Read today ✓';
+  document.getElementById('rev-mark-btn').classList.add('done');
+  document.getElementById('rev-done').style.display = 'inline';
 }
 
-/* ── Save reflection ── */
+/* ═══════════════════════════════════════════
+   SAVE REFLECTION
+═══════════════════════════════════════════ */
 function saveReflect() {
   const val = document.getElementById('r-text').value.trim();
   if (!val) return;
-
-  const now = new Date();
-
-  const entry = {
-    id:     current ? current.id : uid(),
-    date:   today(),
-    time:   now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-    text:   val,
-    book:   current ? current.title  : null,
-    author: current ? current.author : null,
-    page:   current ? current.page   : null,
-  };
-
-  // Update if same session, otherwise prepend
-  const existing = state.reflections.findIndex(r => r.id === entry.id);
-  if (existing >= 0) {
-    state.reflections[existing] = entry;
-  } else {
-    state.reflections.unshift(entry);
-  }
-
-  if (state.reflections.length > 50) state.reflections.pop();
-
-  save();
-
+  appState.reflections[today()] = val;
+  saveState();
   const ok = document.getElementById('saved-ok');
   ok.style.display = 'inline';
   setTimeout(() => { ok.style.display = 'none'; }, 2200);
-
-  // Clear textarea after save
-  document.getElementById('r-text').value = '';
-
-  renderReflections();
 }
 
-/* ── Log session ── */
-function logSession() {
-  if (!current) return;
-  const now = new Date();
-  const td  = today();
-
-  if (state.lastDate !== td) {
-    const yest = new Date();
-    yest.setDate(yest.getDate() - 1);
-    const yStr = yest.toISOString().split('T')[0];
-    if (!state.markedDates.includes(td)) {
-      if (state.lastDate !== yStr) state.streak = Math.max(state.streak, 1);
-    }
-    state.lastDate = td;
-  }
-
-  state.sessions++;
-  state.mins += current.time;
-
-  state.log.unshift({
-    date:   now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    time:   now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-    title:  current.title,
-    page:   current.page,
-    mins:   current.time,
-    input:  current.userInput ? current.userInput.slice(0, 60) + '...' : '',
-    marked: false,
-  });
-
-  if (state.log.length > 30) state.log.pop();
-
-  save();
-  renderStats();
-  renderLog();
-}
-
-/* ── Render stats ── */
+/* ═══════════════════════════════════════════
+   STATS
+═══════════════════════════════════════════ */
 function renderStats() {
-  document.getElementById('s-streak').textContent = state.streak;
-  document.getElementById('s-sess').textContent   = state.sessions;
-  document.getElementById('s-mins').textContent   = state.mins;
+  const streak = document.getElementById('s-streak');
+  const sess   = document.getElementById('s-sess');
+  const mins   = document.getElementById('s-mins');
+  if (streak) streak.textContent = appState.streak   || 0;
+  if (sess)   sess.textContent   = appState.sessions || 0;
+  if (mins)   mins.textContent   = appState.mins     || 0;
 }
 
-/* ── Render session log ── */
-function renderLog() {
-  const el = document.getElementById('log-list');
-  if (!el) return;
+function showStats(show) {
+  const el = document.getElementById('oracle-stats');
+  if (el) el.style.display = show ? 'grid' : 'none';
+}
 
-  if (!state.log.length) {
-    el.innerHTML = '<p class="log-empty">No sessions yet. Find your first chapter to begin.</p>';
-    return;
+/* ═══════════════════════════════════════════
+   LOCAL STORAGE
+═══════════════════════════════════════════ */
+function loadLibrary() {
+  try {
+    const raw = localStorage.getItem(LIBRARY_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(_) { return null; }
+}
+
+function saveLibrary(books) {
+  const lib = {
+    version:   2,
+    createdAt: (library && library.createdAt) ? library.createdAt : today(),
+    books
+  };
+  localStorage.setItem(LIBRARY_KEY, JSON.stringify(lib));
+  library = lib;
+}
+
+function loadState() {
+  try {
+    const raw      = localStorage.getItem(STATE_KEY);
+    const defaults = {
+      streak: 0, sessions: 0, mins: 0,
+      lastDate: null, markedDates: [], log: [], reflections: {}
+    };
+    return raw ? Object.assign(defaults, JSON.parse(raw)) : defaults;
+  } catch(_) {
+    return { streak: 0, sessions: 0, mins: 0, lastDate: null, markedDates: [], log: [], reflections: {} };
   }
-
-  el.innerHTML = state.log.slice(0, 10).map(e => `
-    <div class="log-entry">
-      <div class="log-book">${e.title}</div>
-      ${e.input ? `<div class="log-input">"${e.input}"</div>` : ''}
-      <div class="log-meta">
-        <span>${e.date} &middot; ${e.time}</span>
-        <span class="log-pill">p.${e.page}</span>
-        <span>${e.mins} min</span>
-        ${e.marked ? '<span class="log-pill green">read ✓</span>' : ''}
-      </div>
-    </div>
-  `).join('');
 }
 
-/* ── Render reflection journal (accordion) ── */
-function renderReflections() {
-  const el = document.getElementById('reflection-list');
-  if (!el) return;
-
-  if (!state.reflections.length) {
-    el.innerHTML = '<p class="log-empty">No reflections yet. Write something after your next session.</p>';
-    return;
-  }
-
-  el.innerHTML = state.reflections.slice(0, 30).map((entry, i) => {
-    const d     = new Date(entry.date + 'T12:00:00');
-    const label = d.toLocaleDateString('en-US', {
-      month: 'long', day: 'numeric', year: 'numeric'
-    });
-    const timeLabel   = entry.time ? ' · ' + entry.time : '';
-    const accordionId = 'reflection-acc-' + i;
-
-    return `
-      <div class="accordion-entry">
-        <button
-          type="button"
-          class="accordion-header"
-          aria-expanded="false"
-          aria-controls="${accordionId}"
-          onclick="toggleAccordion(this)"
-        >
-          <div class="accordion-meta">
-            <span class="accordion-date">${label}${timeLabel}</span>
-            ${entry.book ? `<span class="accordion-book">${entry.book}${entry.page ? ' · p.' + entry.page : ''}</span>` : ''}
-          </div>
-          <span class="accordion-chevron" aria-hidden="true">›</span>
-        </button>
-        <div class="accordion-body" id="${accordionId}" hidden>
-          <div class="reflection-text">${entry.text}</div>
-        </div>
-      </div>
-    `;
-  }).join('');
+function saveState() {
+  localStorage.setItem(STATE_KEY, JSON.stringify(appState));
 }
 
-/* ── Accordion toggle ── */
-function toggleAccordion(btn) {
-  const expanded = btn.getAttribute('aria-expanded') === 'true';
-  const bodyId   = btn.getAttribute('aria-controls');
-  const body     = document.getElementById(bodyId);
-  btn.setAttribute('aria-expanded', !expanded);
-  btn.classList.toggle('open', !expanded);
-  if (body) body.hidden = expanded;
+/* ═══════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════ */
+function today() {
+  return new Date().toISOString().split('T')[0];
 }
 
-/* ── Reset oracle — full reset ── */
-function resetOracle() {
-  const input = document.getElementById('oracle-input');
-  if (input) {
-    input.value = '';
-    const counter = document.getElementById('char-count');
-    if (counter) counter.textContent = '500';
-  }
-
-  const card = document.getElementById('result-card');
-  if (card) card.classList.remove('visible');
-
-  const markBtn = document.getElementById('mark-btn');
-  if (markBtn) {
-    markBtn.textContent = 'Mark read today';
-    markBtn.classList.remove('done');
-  }
-
-  const done = document.getElementById('r-done');
-  if (done) done.style.display = 'none';
-
-  const rText = document.getElementById('r-text');
-  if (rText) rText.value = '';
-
-  const prompt = document.getElementById('r-prompt');
-  if (prompt) prompt.textContent = 'Find your chapter above and your reflection prompt will appear here.';
-
-  current = null;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
-/* ── Boot ── */
-document.addEventListener('DOMContentLoaded', () => {
-  initPills();
-  initCharCount();
-
-  initMic('mic-btn',         'oracle-input', 'listening-bar');
-  initMic('reflect-mic-btn', 'r-text',       'reflect-listening-bar');
-
-  document.getElementById('oracle-btn').addEventListener('click', callOracle);
-  document.getElementById('mark-btn').addEventListener('click', markRead);
-  document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
-  document.getElementById('new-reading-btn').addEventListener('click', resetOracle);
-
-  document.getElementById('oracle-input').addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') callOracle();
-  });
-
-  renderStats();
-  renderLog();
-  renderReflections();
-});
+function formatLabel(fmt) {
+  const map = { print: '📖 Print', audio: '🎧 Audio', ebook: '📱 eBook' };
+  return map[fmt] || '📖 Print';
+}
