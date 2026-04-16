@@ -77,7 +77,7 @@ function initMic() {
   recognition.maxAlternatives = 1;
 
   let silenceTimer = null;
-  const SILENCE_TIMEOUT = 4500; // 4.5 seconds of silence before auto-stop
+const SILENCE_TIMEOUT = 9000; // 9 seconds of silence before auto-stop
 
   function resetSilenceTimer() {
     if (silenceTimer) clearTimeout(silenceTimer);
