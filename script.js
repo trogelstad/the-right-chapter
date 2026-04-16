@@ -1,4 +1,4 @@
-/* The Right Chapter — script.js v8 */
+/* The Right Chapter — script.js v9 */
 'use strict';
 
 /* ── State ── */
@@ -76,7 +76,12 @@ function initCharCount() {
   });
 }
 
-/* ── Desktop mic only ── */
+/* ═══════════════════════════════════════════
+   initMic — push to talk
+   Tap once to start. Tap again to stop.
+   No silence timer. Simple and reliable.
+   Each instance is fully isolated.
+═══════════════════════════════════════════ */
 function initMic(micBtnId, inputId, listeningBarId) {
   const micBtn = document.getElementById(micBtnId);
   if (!micBtn) return;
@@ -88,79 +93,67 @@ function initMic(micBtnId, inputId, listeningBarId) {
     return;
   }
 
-  let silenceTimer   = null;
+  let isListening    = false;
   let fullTranscript = '';
-  let shouldListen   = false;
-  let isActive       = false;
-  let activeRecog    = null;
-  const SILENCE_MS   = 9000;
+  let recog          = null;
 
+  /* ── show/hide listening bar ── */
   function showBar(show) {
     const bar = document.getElementById(listeningBarId);
     if (!bar) return;
     bar.classList.toggle('visible', show);
   }
 
-  function updateField(text) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    input.value = text;
+  /* ── write text to target field ── */
+  function writeToField(text) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.value = text;
     if (inputId === 'oracle-input') {
       const counter = document.getElementById('char-count');
       if (counter) {
-        const remaining = 500 - text.length;
-        counter.textContent = remaining;
-        counter.style.color = remaining < 50 ? 'var(--brass)' : 'var(--ink-4)';
+        const rem = 500 - text.length;
+        counter.textContent = rem;
+        counter.style.color = rem < 50 ? 'var(--brass)' : 'var(--ink-4)';
       }
     }
   }
 
-function resetSilenceTimer() {
-    if (silenceTimer) clearTimeout(silenceTimer);
-    silenceTimer = setTimeout(() => {
-      shouldListen = false;
-      const r = activeRecog;
-      activeRecog = null;
-      try { if (r) r.stop(); } catch (_) {}
-      // Delay hardStop slightly to let onend fire cleanly
-      setTimeout(hardStop, 200);
-    }, SILENCE_MS);
+  /* ── stop and clean up ── */
+  function stopListening() {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    showBar(false);
+    if (recog) {
+      try { recog.stop(); } catch (_) {}
+      recog = null;
+    }
   }
 
-  function clearSilenceTimer() {
-    if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
-  }
+  /* ── start a recognition session ── */
+  function startListening() {
+    if (isListening) return;
 
-function hardStop() {
-    shouldListen = false;
-    isActive     = false;
-    clearSilenceTimer();
-    // Force UI update regardless of state
-    try { micBtn.classList.remove('listening'); } catch (_) {}
-    try { showBar(false); } catch (_) {}
-    activeRecog = null;
-  }
-
-  function buildAndStart() {
-    if (!shouldListen) { hardStop(); return; }
+    // Seed fullTranscript from current field value so we append, not replace
+    const el = document.getElementById(inputId);
+    fullTranscript = el && el.value.trim() ? el.value.trim() : '';
 
     const r = new SpeechRecognition();
-    r.continuous      = false;
+    r.continuous      = true;   // keep open until user taps stop
     r.interimResults  = true;
     r.lang            = 'en-US';
     r.maxAlternatives = 1;
 
     r.onstart = () => {
-      isActive = true;
+      isListening = true;
       micBtn.classList.add('listening');
       showBar(true);
-      resetSilenceTimer();
     };
 
     r.onresult = (e) => {
-      resetSilenceTimer();
-      let finalChunk = '';
+      let finalChunk   = '';
       let interimChunk = '';
+
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) {
           finalChunk += e.results[i][0].transcript;
@@ -168,74 +161,100 @@ function hardStop() {
           interimChunk += e.results[i][0].transcript;
         }
       }
+
       if (finalChunk) {
         fullTranscript += (fullTranscript ? ' ' : '') + finalChunk.trim();
       }
+
       const display = fullTranscript + (interimChunk ? ' ' + interimChunk : '');
-      if (display.trim()) updateField(display);
+      if (display.trim()) writeToField(display);
     };
 
     r.onerror = (e) => {
+      console.warn('Speech recognition error:', e.error);
       if (e.error === 'not-allowed') {
-        hardStop();
+        stopListening();
         alert('Microphone access was denied. Please allow it in your browser settings.');
+      } else if (e.error === 'no-speech') {
+        // User paused — keep listening, don't stop
+      } else {
+        stopListening();
       }
     };
 
     r.onend = () => {
-      activeRecog = null;
-      if (shouldListen) {
-        setTimeout(() => {
-          if (shouldListen) buildAndStart();
-          else hardStop();
-        }, 120);
+      // Only stop UI if user tapped to stop
+      // If still supposed to be listening, restart (handles browser auto-stop)
+      if (isListening) {
+        try {
+          r.start();
+        } catch (_) {
+          // If restart fails, create fresh instance
+          recog = null;
+          setTimeout(() => {
+            if (isListening) startListeningFresh();
+          }, 150);
+        }
       } else {
-        hardStop();
+        stopListening();
       }
     };
 
-    activeRecog = r;
+    recog = r;
     try {
       r.start();
     } catch (err) {
-      activeRecog = null;
-      setTimeout(() => {
-        if (shouldListen) buildAndStart();
-        else hardStop();
-      }, 250);
+      console.warn('Could not start recognition:', err);
+      isListening = false;
     }
   }
 
+  /* ── fresh instance if restart fails ── */
+  function startListeningFresh() {
+    if (!isListening) return;
+    const el = document.getElementById(inputId);
+    fullTranscript = el && el.value.trim() ? el.value.trim() : '';
+
+    const r = new SpeechRecognition();
+    r.continuous     = true;
+    r.interimResults = true;
+    r.lang           = 'en-US';
+
+    r.onstart = () => { /* already showing UI */ };
+
+    r.onresult = (e) => {
+      let finalChunk = '';
+      let interimChunk = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalChunk += e.results[i][0].transcript;
+        else interimChunk += e.results[i][0].transcript;
+      }
+      if (finalChunk) fullTranscript += (fullTranscript ? ' ' : '') + finalChunk.trim();
+      const display = fullTranscript + (interimChunk ? ' ' + interimChunk : '');
+      if (display.trim()) writeToField(display);
+    };
+
+    r.onerror = () => { if (!isListening) stopListening(); };
+    r.onend   = () => { if (isListening) { try { r.start(); } catch(_) {} } else stopListening(); };
+
+    recog = r;
+    try { r.start(); } catch(_) { stopListening(); }
+  }
+
+  /* ── mic button: tap to start, tap to stop ── */
   micBtn.addEventListener('click', () => {
-    if (isActive || shouldListen) {
-      // Toggle off — but preserve transcript so user can re-tap to continue
-      shouldListen = false;
-      try { if (activeRecog) activeRecog.stop(); } catch (_) {}
-      setTimeout(hardStop, 150);
-      return;
-    }
-
-    // Re-tap to continue: don't clear fullTranscript
-    // Only clear if textarea is empty
-    const inputEl = document.getElementById(inputId);
-    if (!inputEl || !inputEl.value.trim()) {
-      fullTranscript = '';
+    if (isListening) {
+      stopListening();
     } else {
-      // Resume from current textarea value
-      fullTranscript = inputEl.value.trim();
-    }
-
-    shouldListen = true;
-
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => buildAndStart())
-        .catch(() => {
-          shouldListen = false;
-          alert('Please allow microphone access to use voice input.');
-        });
-    } else {
-      buildAndStart();
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(() => startListening())
+          .catch(() => {
+            alert('Please allow microphone access to use voice input.');
+          });
+      } else {
+        startListening();
+      }
     }
   });
 }
@@ -320,16 +339,14 @@ function renderOracle(oracle, time) {
   document.getElementById('r-step').textContent     = oracle.singleStep       || '';
   document.getElementById('r-prompt').textContent   = oracle.reflectionPrompt || '';
 
-  const td  = today();
+  // Reset mark-read for new session
   const btn = document.getElementById('mark-btn');
   const dne = document.getElementById('r-done');
-
-  // Reset mark-read for new session
   btn.textContent = 'Mark read today';
   btn.classList.remove('done');
   dne.style.display = 'none';
 
-  // Clear reflection textarea for new session
+  // Clear reflection textarea
   const rText = document.getElementById('r-text');
   if (rText) rText.value = '';
 
@@ -358,6 +375,7 @@ function showError(message) {
 function markRead() {
   const td = today();
   if (!current) return;
+
   if (state.markedDates.includes(td)) {
     const btn = document.getElementById('mark-btn');
     btn.textContent = 'Read today ✓';
@@ -365,6 +383,7 @@ function markRead() {
     document.getElementById('r-done').style.display = 'inline';
     return;
   }
+
   state.markedDates.push(td);
 
   const yest = new Date();
@@ -397,7 +416,6 @@ function saveReflect() {
 
   const now = new Date();
 
-  // Each save creates a new entry tied to this session
   const entry = {
     id:     current ? current.id : uid(),
     date:   today(),
@@ -408,7 +426,7 @@ function saveReflect() {
     page:   current ? current.page   : null,
   };
 
-  // Check if entry for this session already exists — update it
+  // Update if same session, otherwise prepend
   const existing = state.reflections.findIndex(r => r.id === entry.id);
   if (existing >= 0) {
     state.reflections[existing] = entry;
@@ -416,7 +434,6 @@ function saveReflect() {
     state.reflections.unshift(entry);
   }
 
-  // Keep max 50 reflections
   if (state.reflections.length > 50) state.reflections.pop();
 
   save();
@@ -513,7 +530,7 @@ function renderReflections() {
     const label = d.toLocaleDateString('en-US', {
       month: 'long', day: 'numeric', year: 'numeric'
     });
-    const timeLabel = entry.time ? ' · ' + entry.time : '';
+    const timeLabel   = entry.time ? ' · ' + entry.time : '';
     const accordionId = 'reflection-acc-' + i;
 
     return `
@@ -544,7 +561,6 @@ function toggleAccordion(btn) {
   const expanded = btn.getAttribute('aria-expanded') === 'true';
   const bodyId   = btn.getAttribute('aria-controls');
   const body     = document.getElementById(bodyId);
-
   btn.setAttribute('aria-expanded', !expanded);
   btn.classList.toggle('open', !expanded);
   if (body) body.hidden = expanded;
@@ -552,7 +568,6 @@ function toggleAccordion(btn) {
 
 /* ── Reset oracle — full reset ── */
 function resetOracle() {
-  // Clear oracle input
   const input = document.getElementById('oracle-input');
   if (input) {
     input.value = '';
@@ -560,30 +575,25 @@ function resetOracle() {
     if (counter) counter.textContent = '500';
   }
 
-  // Hide result card
   const card = document.getElementById('result-card');
   if (card) card.classList.remove('visible');
 
-  // Reset mark-read button
   const markBtn = document.getElementById('mark-btn');
   if (markBtn) {
     markBtn.textContent = 'Mark read today';
     markBtn.classList.remove('done');
   }
+
   const done = document.getElementById('r-done');
   if (done) done.style.display = 'none';
 
-  // Clear reflection textarea
   const rText = document.getElementById('r-text');
   if (rText) rText.value = '';
 
-  // Reset reflection prompt
   const prompt = document.getElementById('r-prompt');
   if (prompt) prompt.textContent = 'Find your chapter above and your reflection prompt will appear here.';
 
-  // Clear current session
   current = null;
-
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -592,7 +602,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initPills();
   initCharCount();
 
-  // Desktop mic only — mobile uses native keyboard mic
   initMic('mic-btn',         'oracle-input', 'listening-bar');
   initMic('reflect-mic-btn', 'r-text',       'reflect-listening-bar');
 
