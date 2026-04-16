@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Right Chapter</title>
+  <meta name="description" content="The right chapter, right now." />
+  <meta name="theme-color" content="#3b2f6e" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="The Right Chapter" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<main class="rr" role="main">
+
+  <header class="rr-head">
+    <h1>The Right Chapter</h1>
+    <p>The right chapter, right now.</p>
+  </header>
+
+  <div class="stats-row" aria-label="Reading stats">
+    <div class="stat">
+      <div class="stat-n" id="s-streak">0</div>
+      <div class="stat-l">Day streak</div>
+    </div>
+    <div class="stat">
+      <div class="stat-n" id="s-sess">0</div>
+      <div class="stat-l">Sessions</div>
+    </div>
+    <div class="stat">
+      <div class="stat-n" id="s-mins">0</div>
+      <div class="stat-l">Minutes read</div>
+    </div>
+  </div>
+
+  <div class="rr-label" id="label-time">How much time do you have?</div>
+  <div class="pills" id="g-time" role="group" aria-labelledby="label-time">
+    <button type="button" class="pill on" data-v="10">10 min</button>
+    <button type="button" class="pill" data-v="20">20 min</button>
+    <button type="button" class="pill" data-v="30">30 min</button>
+  </div>
+
+  <div class="rr-label" id="label-cat">Category</div>
+  <div class="pills" id="g-cat" role="group" aria-labelledby="label-cat">
+    <button type="button" class="pill on" data-v="any">Any</button>
+    <button type="button" class="pill" data-v="Recovery / Sobriety">Recovery</button>
+    <button type="button" class="pill" data-v="Spiritual / Reflection">Spiritual</button>
+    <button type="button" class="pill" data-v="Mindset / Personal Growth">Mindset</button>
+    <button type="button" class="pill" data-v="Money / Life Stewardship">Money</button>
+    <button type="button" class="pill" data-v="Symbolic / Story-Based Inspiration">Inspiration</button>
+  </div>
+
+  <div class="rr-label" id="label-mood">What do I need today?</div>
+  <div class="pills" id="g-mood" role="group" aria-labelledby="label-mood">
+    <button type="button" class="pill on" data-v="any">Any</button>
+    <button type="button" class="pill" data-v="grounding">Grounding</button>
+    <button type="button" class="pill" data-v="motivation">Motivation</button>
+    <button type="button" class="pill" data-v="spiritual reset">Spiritual reset</button>
+    <button type="button" class="pill" data-v="practical sobriety help">Sobriety help</button>
+    <button type="button" class="pill" data-v="creative spark">Creative spark</button>
+    <button type="button" class="pill" data-v="money focus">Money focus</button>
+  </div>
+
+  <button type="button" class="spin-btn" id="spin-btn" aria-label="Find my chapter">
+    Find my chapter
+  </button>
+
+  <section class="result-card" id="result-card" aria-live="polite" aria-label="Your chapter">
+    <div class="book-title" id="r-title"></div>
+    <div class="book-author" id="r-author"></div>
+    <div class="badges">
+      <span class="badge b-cat" id="r-cat"></span>
+      <span class="badge b-time" id="r-time"></span>
+      <span class="badge b-mood" id="r-mood"></span>
+      <span class="badge b-done" id="r-done">Read today</span>
+    </div>
+    <div class="page-box">
+      <div class="page-num" id="r-page"></div>
+      <div class="page-sub">suggested starting page</div>
+      <div class="page-note">Open to this page and begin — or flip back to the start of the chapter that contains it.</div>
+    </div>
+    <p class="res-note" id="r-note"></p>
+    <div class="btn-row">
+      <button type="button" class="rr-btn" id="reroll-page-btn">New page, same book</button>
+      <button type="button" class="rr-btn" id="reroll-book-btn">Different book</button>
+      <button type="button" class="rr-btn mark-btn" id="mark-btn">Mark read today</button>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true"><span>reflection</span></div>
+
+  <section class="reflect-card" aria-label="Daily reflection">
+    <div class="card-head">Today's reflection</div>
+    <p class="reflect-prompt" id="r-prompt">Find your chapter above and your reflection prompt will appear here.</p>
+    <textarea id="r-text" placeholder="Write a few thoughts after your session..." aria-label="Reflection notes"></textarea>
+    <div style="display:flex;align-items:center;">
+      <button type="button" class="save-btn" id="save-reflect-btn">Save reflection</button>
+      <span class="saved-ok" id="saved-ok" aria-live="polite">Saved.</span>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true"><span>reading log</span></div>
+
+  <section class="log-card" aria-label="Session history">
+    <div class="card-head">Session history</div>
+    <div id="log-list">
+      <p class="log-empty">No sessions yet. Find your first chapter to begin.</p>
+    </div>
+  </section>
+
+</main>
+
+<script src="script.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
