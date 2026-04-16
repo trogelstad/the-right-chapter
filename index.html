@@ -26,6 +26,7 @@
     <p>The right chapter, right now.</p>
   </header>
 
+  <!-- Stats -->
   <div class="stats-row" aria-label="Reading stats">
     <div class="stat">
       <div class="stat-n" id="s-streak">0</div>
@@ -41,72 +42,93 @@
     </div>
   </div>
 
-  <div class="rr-label" id="label-time">How much time do you have?</div>
-  <div class="pills" id="g-time" role="group" aria-labelledby="label-time">
-    <button type="button" class="pill on" data-v="10">10 min</button>
-    <button type="button" class="pill" data-v="20">20 min</button>
-    <button type="button" class="pill" data-v="30">30 min</button>
-  </div>
+  <!-- Oracle Intake -->
+  <section class="oracle-intake" aria-label="Oracle input">
+    <label class="oracle-question" for="oracle-input">
+      What are you carrying right now?
+    </label>
+    <textarea
+      id="oracle-input"
+      class="oracle-textarea"
+      placeholder="Write a few honest words. The right chapter will find you."
+      aria-label="What are you carrying right now"
+      rows="4"
+      maxlength="500"
+    ></textarea>
 
-  <div class="rr-label" id="label-cat">Category</div>
-  <div class="pills" id="g-cat" role="group" aria-labelledby="label-cat">
-    <button type="button" class="pill on" data-v="any">Any</button>
-    <button type="button" class="pill" data-v="Recovery / Sobriety">Recovery</button>
-    <button type="button" class="pill" data-v="Spiritual / Reflection">Spiritual</button>
-    <button type="button" class="pill" data-v="Mindset / Personal Growth">Mindset</button>
-    <button type="button" class="pill" data-v="Money / Life Stewardship">Money</button>
-    <button type="button" class="pill" data-v="Symbolic / Story-Based Inspiration">Inspiration</button>
-  </div>
-
-  <div class="rr-label" id="label-mood">What do I need today?</div>
-  <div class="pills" id="g-mood" role="group" aria-labelledby="label-mood">
-    <button type="button" class="pill on" data-v="any">Any</button>
-    <button type="button" class="pill" data-v="grounding">Grounding</button>
-    <button type="button" class="pill" data-v="motivation">Motivation</button>
-    <button type="button" class="pill" data-v="spiritual reset">Spiritual reset</button>
-    <button type="button" class="pill" data-v="practical sobriety help">Sobriety help</button>
-    <button type="button" class="pill" data-v="creative spark">Creative spark</button>
-    <button type="button" class="pill" data-v="money focus">Money focus</button>
-  </div>
-
-  <button type="button" class="spin-btn" id="spin-btn" aria-label="Find my chapter">
-    Find my chapter
-  </button>
-
-  <section class="result-card" id="result-card" aria-live="polite" aria-label="Your chapter">
-    <div class="book-title" id="r-title"></div>
-    <div class="book-author" id="r-author"></div>
-    <div class="badges">
-      <span class="badge b-cat" id="r-cat"></span>
-      <span class="badge b-time" id="r-time"></span>
-      <span class="badge b-mood" id="r-mood"></span>
-      <span class="badge b-done" id="r-done">Read today</span>
+    <div class="oracle-meta-row">
+      <div class="pills-inline" id="g-time" role="group" aria-label="Session length">
+        <button type="button" class="pill on" data-v="10">10 min</button>
+        <button type="button" class="pill" data-v="20">20 min</button>
+        <button type="button" class="pill" data-v="30">30 min</button>
+      </div>
+      <span class="char-count" id="char-count">500</span>
     </div>
-    <div class="page-box">
-      <div class="page-num" id="r-page"></div>
-      <div class="page-sub">suggested starting page</div>
-      <div class="page-note">Open to this page and begin — or flip back to the start of the chapter that contains it.</div>
-    </div>
-    <p class="res-note" id="r-note"></p>
-    <div class="btn-row">
-      <button type="button" class="rr-btn" id="reroll-page-btn">New page, same book</button>
-      <button type="button" class="rr-btn" id="reroll-book-btn">Different book</button>
-      <button type="button" class="rr-btn mark-btn" id="mark-btn">Mark read today</button>
+
+    <button type="button" class="spin-btn" id="oracle-btn" aria-label="Find my chapter">
+      Find my chapter
+    </button>
+
+    <!-- Loading state -->
+    <div class="oracle-loading" id="oracle-loading" aria-live="polite">
+      <div class="loading-dot"></div>
+      <div class="loading-dot"></div>
+      <div class="loading-dot"></div>
     </div>
   </section>
 
+  <!-- Oracle Result Card -->
+  <section class="result-card oracle-card" id="result-card" aria-live="polite" aria-label="Your chapter">
+
+    <div class="oracle-mirror" id="r-mirror"></div>
+    <div class="oracle-name" id="r-name"></div>
+    <div class="oracle-offering" id="r-offering"></div>
+
+    <div class="book-block">
+      <div class="book-title" id="r-title"></div>
+      <div class="book-author" id="r-author"></div>
+      <div class="badges">
+        <span class="badge b-time" id="r-time"></span>
+        <span class="badge b-done" id="r-done">Read today</span>
+      </div>
+    </div>
+
+    <div class="page-box">
+      <div class="page-num" id="r-page"></div>
+      <div class="page-sub">suggested starting point</div>
+    </div>
+
+    <div class="oracle-why" id="r-why"></div>
+
+    <div class="oracle-step-block">
+      <div class="oracle-step-label">After reading</div>
+      <div class="oracle-step" id="r-step"></div>
+    </div>
+
+    <div class="btn-row">
+      <button type="button" class="rr-btn mark-btn" id="mark-btn">Mark read today</button>
+      <button type="button" class="rr-btn" id="new-reading-btn">Ask again</button>
+    </div>
+  </section>
+
+  <!-- Reflection -->
   <div class="divider" aria-hidden="true"><span>reflection</span></div>
 
   <section class="reflect-card" aria-label="Daily reflection">
     <div class="card-head">Today's reflection</div>
     <p class="reflect-prompt" id="r-prompt">Find your chapter above and your reflection prompt will appear here.</p>
-    <textarea id="r-text" placeholder="Write a few thoughts after your session..." aria-label="Reflection notes"></textarea>
+    <textarea
+      id="r-text"
+      placeholder="Write a few thoughts after your session..."
+      aria-label="Reflection notes"
+    ></textarea>
     <div style="display:flex;align-items:center;">
       <button type="button" class="save-btn" id="save-reflect-btn">Save reflection</button>
       <span class="saved-ok" id="saved-ok" aria-live="polite">Saved.</span>
     </div>
   </section>
 
+  <!-- Reading log -->
   <div class="divider" aria-hidden="true"><span>reading log</span></div>
 
   <section class="log-card" aria-label="Session history">
