@@ -59,32 +59,70 @@ function initMic() {
   const micBtn = document.getElementById('mic-btn');
   if (!micBtn) return;
 
-  // Check browser support
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
   if (!SpeechRecognition) {
-    micBtn.style.display = 'none';
+    micBtn.style.opacity = '0.4';
+    micBtn.title = 'Voice input not supported in this browser';
+    micBtn.addEventListener('click', () => {
+      alert('Voice input works best in Chrome on desktop or Safari on iOS. Try typing your response instead.');
+    });
     return;
   }
 
   recognition = new SpeechRecognition();
-  recognition.continuous = false;
+  recognition.continuous = true;      // keep listening through pauses
   recognition.interimResults = true;
   recognition.lang = 'en-US';
+  recognition.maxAlternatives = 1;
+
+  let silenceTimer = null;
+  const SILENCE_TIMEOUT = 4500; // 4.5 seconds of silence before auto-stop
+
+  function resetSilenceTimer() {
+    if (silenceTimer) clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(() => {
+      if (isListening && recognition) {
+        recognition.stop();
+      }
+    }, SILENCE_TIMEOUT);
+  }
+
+  function clearSilenceTimer() {
+    if (silenceTimer) {
+      clearTimeout(silenceTimer);
+      silenceTimer = null;
+    }
+  }
 
   recognition.onstart = () => {
     isListening = true;
     micBtn.classList.add('listening');
     showListening(true);
+    resetSilenceTimer(); // start the silence countdown
   };
 
   recognition.onresult = (e) => {
     const input = document.getElementById('oracle-input');
     const counter = document.getElementById('char-count');
-    let transcript = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      transcript += e.results[i][0].transcript;
+
+    // Reset silence timer every time we hear something
+    resetSilenceTimer();
+
+    let finalTranscript = '';
+    let interimTranscript = '';
+
+    for (let i = 0; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        finalTranscript += e.results[i][0].transcript;
+      } else {
+        interimTranscript += e.results[i][0].transcript;
+      }
     }
-    if (input) {
+
+    const transcript = finalTranscript || interimTranscript;
+
+    if (input && transcript) {
       input.value = transcript;
       if (counter) {
         const remaining = 500 - transcript.length;
@@ -96,26 +134,53 @@ function initMic() {
 
   recognition.onerror = (e) => {
     console.error('Speech error:', e.error);
-    stopListening();
+    clearSilenceTimer();
+    if (e.error === 'not-allowed') {
+      showListening(false);
+      micBtn.classList.remove('listening');
+      isListening = false;
+      alert('Microphone access was denied. Please allow microphone access in your browser settings and try again.');
+    } else if (e.error === 'no-speech') {
+      stopListening();
+    } else {
+      stopListening();
+    }
   };
 
   recognition.onend = () => {
+    clearSilenceTimer();
     stopListening();
   };
 
   micBtn.addEventListener('click', () => {
     if (isListening) {
+      clearSilenceTimer();
       recognition.stop();
     } else {
-      try {
-        recognition.start();
-      } catch (err) {
-        console.error('Mic error:', err);
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(() => {
+            try {
+              recognition.start();
+            } catch (err) {
+              console.error('Recognition start error:', err);
+              stopListening();
+            }
+          })
+          .catch((err) => {
+            console.error('Mic permission denied:', err);
+            alert('Please allow microphone access to use voice input.');
+          });
+      } else {
+        try {
+          recognition.start();
+        } catch (err) {
+          console.error('Recognition start error:', err);
+        }
       }
     }
   });
 }
-
 function stopListening() {
   isListening = false;
   const micBtn = document.getElementById('mic-btn');
