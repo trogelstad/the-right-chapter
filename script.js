@@ -395,17 +395,11 @@ function renderReveal(data) {
   const pageEl    = document.getElementById('rev-page');
   const pageSubEl = document.getElementById('rev-page-sub');
 
-  if (data.pageRefType === 'number') {
-    pageEl.style.fontSize  = '';
-    pageEl.style.fontStyle = '';
-    pageEl.textContent     = data.pageRef;
-    pageSubEl.textContent  = 'suggested starting page';
-  } else {
-    pageEl.style.fontSize  = '20px';
-    pageEl.style.fontStyle = 'italic';
-    pageEl.textContent     = data.pageRef;
-    pageSubEl.textContent  = 'open here and let the page find you';
-  }
+// Always display the page reference cleanly regardless of type
+  pageEl.style.fontSize  = '';
+  pageEl.style.fontStyle = '';
+  pageEl.textContent     = data.pageRef;
+  pageSubEl.textContent  = 'open to this page and begin';
 
   const badgeEl       = document.getElementById('rev-format-badge');
   badgeEl.textContent = formatLabel(data.format);
