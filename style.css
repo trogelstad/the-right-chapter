@@ -111,6 +111,7 @@ body {
   position: relative;
 }
 
+/* ── Header ── */
 .rr-head {
   text-align: center;
   margin-bottom: 2.75rem;
@@ -158,13 +159,11 @@ body {
   display: block;
   font-size: 11px;
   color: var(--plum-ring);
-  letter-spacing: 0;
   margin-bottom: 10px;
   opacity: 0.7;
 }
 
 .rr-head p {
-  font-family: var(--sans);
   font-size: 11px;
   font-weight: 400;
   color: var(--ink-3);
@@ -173,6 +172,7 @@ body {
   position: relative; z-index: 1;
 }
 
+/* ── Stats ── */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -224,30 +224,101 @@ body {
   letter-spacing: 0.14em;
 }
 
-.rr-label {
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--ink-3);
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  margin-bottom: 11px;
+/* ── Oracle Intake ── */
+.oracle-intake {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--sh-md);
+  position: relative;
+  overflow: hidden;
 }
 
-.pills {
+.oracle-intake::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    var(--plum) 0%,
+    var(--plum-soft) 45%,
+    var(--sage) 100%);
+}
+
+.oracle-question {
+  display: block;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 1.25rem;
+  line-height: 1.3;
+  text-shadow: 0 1px 2px rgba(45,30,10,0.08);
+}
+
+.oracle-textarea {
+  width: 100%;
+  border: 1px solid var(--line-med);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  font-size: 15px;
+  font-family: var(--sans);
+  font-weight: 300;
+  color: var(--ink);
+  background: var(--inset);
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.7;
+  transition: border-color 0.16s, box-shadow 0.16s;
+  box-shadow: inset 0 1px 4px rgba(45,30,10,0.06);
+  margin-bottom: 14px;
+}
+
+.oracle-textarea:focus {
+  outline: none;
+  border-color: var(--line-focus);
+  box-shadow: 0 0 0 3px rgba(123,114,200,0.13),
+              inset 0 1px 4px rgba(45,30,10,0.06);
+}
+
+.oracle-textarea::placeholder {
+  color: var(--ink-4);
+  font-style: italic;
+}
+
+.oracle-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.char-count {
+  font-size: 11px;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.2s;
+}
+
+/* ── Pills (inline variant) ── */
+.pills-inline {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 1.6rem;
+  gap: 7px;
 }
 
 .pill {
-  padding: 8px 20px;
+  padding: 6px 16px;
   border-radius: 999px;
   border: 1.5px solid var(--line-med);
   background: var(--card);
   color: var(--ink-2);
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
   cursor: pointer;
   user-select: none;
@@ -261,7 +332,6 @@ body {
   color: var(--ink);
   border-color: var(--plum-ring);
   transform: translateY(-1px);
-  box-shadow: var(--sh-sm);
 }
 
 .pill.on {
@@ -270,13 +340,13 @@ body {
   color: #f5f0e8;
   font-weight: 500;
   box-shadow: 0 2px 10px rgba(59,47,110,0.30);
-  transform: none;
 }
 
+/* ── Spin / Oracle button ── */
 .spin-btn {
   display: block;
   width: 100%;
-  padding: 19px 28px;
+  padding: 18px 28px;
   border-radius: var(--r-xl);
   border: 1px solid rgba(59,47,110,0.55);
   background: var(--plum);
@@ -286,9 +356,8 @@ body {
   font-weight: 400;
   letter-spacing: 0.025em;
   cursor: pointer;
-  margin-bottom: 2.25rem;
   box-shadow: var(--sh-plum), inset 0 1px 0 rgba(255,248,235,0.12);
-  transition: background 0.2s, box-shadow 0.2s, transform 0.12s;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.12s, opacity 0.2s;
   position: relative;
   overflow: hidden;
 }
@@ -305,17 +374,51 @@ body {
 
 .spin-btn:hover::before { left: 130%; }
 
-.spin-btn:hover {
+.spin-btn:hover:not(:disabled) {
   background: var(--plum-mid);
   box-shadow: 0 8px 30px rgba(59,47,110,0.36), 0 2px 8px rgba(59,47,110,0.18),
               inset 0 1px 0 rgba(255,248,235,0.14);
 }
 
-.spin-btn:active {
+.spin-btn:active:not(:disabled) {
   transform: scale(0.985);
-  box-shadow: 0 2px 12px rgba(59,47,110,0.25);
 }
 
+.spin-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* ── Loading dots ── */
+.oracle-loading {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 1.5rem 0 0;
+}
+
+.oracle-loading.visible {
+  display: flex;
+}
+
+.loading-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--plum-soft);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%           { transform: scale(1);   opacity: 1; }
+}
+
+/* ── Oracle Result Card ── */
 .result-card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -326,6 +429,9 @@ body {
   display: none;
   position: relative;
   overflow: hidden;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .result-card::before {
@@ -334,9 +440,9 @@ body {
   top: 0; left: 0; right: 0;
   height: 3px;
   background: linear-gradient(90deg,
-    var(--plum) 0%,
-    var(--plum-soft) 45%,
-    var(--sage) 100%);
+    var(--sage) 0%,
+    var(--plum-soft) 55%,
+    var(--plum) 100%);
 }
 
 .result-card::after {
@@ -349,16 +455,67 @@ body {
   pointer-events: none;
 }
 
-.result-card.visible { display: block; }
+.result-card.visible {
+  display: block;
+}
+
+.result-card.visible {
+  animation: cardReveal 0.5s ease forwards;
+}
+
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Oracle text elements ── */
+.oracle-mirror {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.55;
+  margin-bottom: 14px;
+  text-shadow: 0 1px 2px rgba(45,30,10,0.07);
+}
+
+.oracle-name {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.65;
+  margin-bottom: 10px;
+  border-left: 2px solid var(--plum-ring);
+  padding-left: 14px;
+  font-style: italic;
+}
+
+.oracle-offering {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 20px;
+}
+
+/* ── Book block ── */
+.book-block {
+  background: var(--card-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 18px;
+  position: relative;
+}
 
 .book-title {
   font-family: var(--serif);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 400;
   color: var(--ink);
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   line-height: 1.3;
-  text-shadow: 0 1px 2px rgba(45,30,10,0.08);
 }
 
 .book-author {
@@ -366,14 +523,13 @@ body {
   font-weight: 300;
   color: var(--ink-3);
   letter-spacing: 0.05em;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .badges {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
-  margin-bottom: 20px;
 }
 
 .badge {
@@ -386,22 +542,21 @@ body {
   border: 1px solid transparent;
 }
 
-.b-cat  { background: var(--plum-tint);  color: var(--plum);  border-color: var(--plum-ring); }
 .b-time { background: var(--sage-tint);  color: var(--sage);  border-color: var(--sage-ring); }
-.b-mood { background: var(--brass-tint); color: var(--brass); border-color: rgba(122,90,36,0.24); }
 .b-done { background: var(--sage-tint);  color: var(--sage);  border-color: var(--sage-ring);
           font-weight: 600; display: none; }
 
+/* ── Page box ── */
 .page-box {
   background: var(--card-deep);
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
-  padding: 2.25rem 1.5rem;
-  margin-bottom: 18px;
+  padding: 1.75rem 1.5rem;
+  margin-bottom: 20px;
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: inset 0 2px 8px rgba(45,30,10,0.06), var(--sh-xs);
+  box-shadow: inset 0 2px 8px rgba(45,30,10,0.06);
 }
 
 .page-box::before {
@@ -418,7 +573,7 @@ body {
 
 .page-num {
   font-family: var(--serif);
-  font-size: 68px;
+  font-size: 56px;
   font-weight: 400;
   color: var(--plum);
   line-height: 1;
@@ -437,28 +592,42 @@ body {
   position: relative; z-index: 1;
 }
 
-.page-note {
-  font-size: 12px;
-  color: var(--ink-3);
-  font-style: italic;
-  margin-top: 12px;
-  line-height: 1.7;
-  max-width: 380px;
-  margin-left: auto;
-  margin-right: auto;
-  position: relative; z-index: 1;
-}
-
-.res-note {
-  font-size: 13px;
+/* ── Oracle why / step ── */
+.oracle-why {
+  font-size: 14px;
   color: var(--ink-2);
-  border-left: 2px solid var(--plum-ring);
-  padding-left: 14px;
+  line-height: 1.75;
   margin-bottom: 20px;
   font-style: italic;
-  line-height: 1.65;
+  border-left: 2px solid var(--plum-ring);
+  padding-left: 14px;
 }
 
+.oracle-step-block {
+  background: var(--plum-tint);
+  border: 1px solid var(--plum-ring);
+  border-radius: var(--r-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 20px;
+}
+
+.oracle-step-label {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--plum-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  margin-bottom: 6px;
+}
+
+.oracle-step {
+  font-size: 13px;
+  color: var(--plum);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* ── Buttons ── */
 .btn-row {
   display: flex;
   gap: 8px;
@@ -468,7 +637,7 @@ body {
 .rr-btn {
   flex: 1;
   min-width: 130px;
-  padding: 9px 13px;
+  padding: 10px 14px;
   border-radius: var(--r-md);
   border: 1px solid var(--line-med);
   background: var(--inset);
@@ -516,6 +685,7 @@ body {
   transform: none;
 }
 
+/* ── Dividers ── */
 .divider {
   display: flex;
   align-items: center;
@@ -540,6 +710,7 @@ body {
   white-space: nowrap;
 }
 
+/* ── Reflection + Log cards ── */
 .reflect-card,
 .log-card {
   background: var(--card);
@@ -633,6 +804,7 @@ textarea::placeholder { color: var(--ink-4); }
   display: none;
 }
 
+/* ── Log ── */
 .log-entry {
   padding: 13px 0;
   border-bottom: 1px solid var(--line);
@@ -644,12 +816,21 @@ textarea::placeholder { color: var(--ink-4); }
   font-size: 14px;
   font-weight: 500;
   color: var(--ink);
+  margin-bottom: 3px;
+}
+
+.log-input {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-style: italic;
+  margin-bottom: 5px;
+  line-height: 1.5;
 }
 
 .log-meta {
   font-size: 12px;
   color: var(--ink-3);
-  margin-top: 5px;
+  margin-top: 4px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -680,13 +861,17 @@ textarea::placeholder { color: var(--ink-4); }
   padding: 6px 0;
 }
 
+/* ── Responsive ── */
 @media (max-width: 540px) {
   .rr { padding: 2.5rem 1.1rem 5rem; }
-  .rr-head h1 { font-size: 32px; }
+  .rr-head h1 { font-size: 30px; }
   .stat-n { font-size: 28px; }
-  .page-num { font-size: 54px; }
+  .page-num { font-size: 44px; }
   .spin-btn { font-size: 16px; padding: 16px 20px; }
   .result-card { padding: 1.5rem; }
+  .oracle-intake { padding: 1.5rem; }
+  .oracle-question { font-size: 19px; }
+  .oracle-mirror { font-size: 17px; }
   .btn-row { flex-direction: column; }
   .rr-btn { min-width: unset; }
 }
