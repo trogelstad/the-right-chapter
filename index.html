@@ -4,14 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Right Chapter</title>
-  <meta name="description" content="The right chapter, right now." />
+
+  <!-- PWA meta -->
+  <meta name="description" content="The book you need is already on your shelf." />
   <meta name="theme-color" content="#3b2f6e" />
   <link rel="manifest" href="/manifest.json" />
+
+  <!-- Apple PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="The Right Chapter" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192.png" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" />
@@ -21,201 +26,249 @@
 
 <main class="rr" role="main">
 
-  <!-- Header -->
-  <header class="rr-head">
-    <h1>The Right Chapter</h1>
-    <p>The right chapter, right now.</p>
-  </header>
+  <!-- ══════════════════════════════════════
+       SCREEN: LANDING
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-landing">
 
-  <!-- Sacred Invitation -->
-  <section class="invitation" aria-label="Welcome">
-    <p class="invite-line">There is a chapter that was written for this moment.</p>
-    <p class="invite-line invite-accent">Not for everyone. For you. For today.</p>
-    <p class="invite-sub">Type or speak what you are carrying right now.<br>The right chapter will appear.</p>
-  </section>
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>The oracle · Find your page</p>
+    </header>
+
+    <div class="landing-card">
+      <p class="landing-headline">The book you need is already on your shelf.</p>
+      <p class="landing-sub">Tell us what you're carrying. We'll find your chapter.</p>
+      <button type="button" class="spin-btn" id="landing-cta">
+        Find my chapter →
+      </button>
+      <p class="landing-micro">No account needed · Uses only the books you own</p>
+    </div>
+
+  </div>
 
 
+  <!-- ══════════════════════════════════════
+       SCREEN: SHELF SETUP
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-shelf-setup" style="display:none">
 
-  <!-- Oracle Intake -->
-  <section class="oracle-intake" aria-label="Oracle input">
-    <label class="oracle-question" for="oracle-input">
-      What are you carrying right now?
-    </label>
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>Build your shelf</p>
+    </header>
 
-    <div class="textarea-wrap">
-      <textarea
-        id="oracle-input"
-        class="oracle-textarea"
-        placeholder="A few honest words is enough..."
-        aria-label="What are you carrying right now"
-        rows="4"
-        maxlength="500"
-      ></textarea>
-      <button
-        type="button"
-        class="mic-btn"
-        id="mic-btn"
-        aria-label="Speak your answer"
-        title="Tap to speak"
-      >
-        <svg class="mic-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="9" y="2" width="6" height="11" rx="3" fill="currentColor"/>
-          <path d="M5 10a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
+    <div class="setup-intro">
+      <p class="setup-headline">What's on your shelf?</p>
+      <p class="setup-sub">Add 3 to 5 books you own, have nearby, or can listen to right now. The oracle will only ever draw from these.</p>
+    </div>
+
+    <!-- Book entry rows injected here by JS -->
+    <div id="book-rows"></div>
+
+    <button type="button" class="add-book-btn" id="add-book-btn">+ Add another book</button>
+
+    <div class="shelf-progress" id="shelf-progress"></div>
+
+    <button type="button" class="spin-btn" id="shelf-confirm-btn" disabled>
+      My shelf is ready →
+    </button>
+    <p class="landing-micro">You can edit your shelf anytime</p>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       SCREEN: SHELF CONFIRMATION
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-shelf-confirm" style="display:none">
+
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>Your shelf is ready</p>
+    </header>
+
+    <div class="confirm-card">
+      <p class="confirm-headline">Your shelf is ready.</p>
+      <p class="confirm-sub">The oracle will draw only from these books. Your chapter is waiting.</p>
+
+      <div id="shelf-display"></div>
+
+      <button type="button" class="spin-btn" id="confirm-oracle-btn">
+        Ask the oracle →
+      </button>
+      <button type="button" class="text-link" id="confirm-edit-btn">Edit my shelf</button>
+    </div>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       SCREEN: ORACLE INTAKE
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-oracle" style="display:none">
+
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p id="oracle-shelf-label">Your shelf</p>
+    </header>
+
+    <div class="oracle-card">
+      <p class="oracle-question">What are you carrying right now?</p>
+      <p class="oracle-helper">Write freely. A feeling, a situation, something you can't quite name. The oracle reads between the lines.</p>
+
+      <div class="oracle-input-wrap">
+        <textarea
+          id="oracle-input"
+          placeholder="A rough morning. A decision I keep avoiding. Something I can't shake."
+          aria-label="What you are carrying"
+          maxlength="500"
+        ></textarea>
+        <span class="char-count" id="char-count"></span>
+      </div>
+
+      <button type="button" class="spin-btn" id="oracle-submit-btn" disabled>
+        Find my chapter →
+      </button>
+
+      <button type="button" class="text-link shelf-link" id="oracle-edit-shelf-btn">
+        My shelf (<span id="oracle-shelf-count">0</span> books)
       </button>
     </div>
 
-    <!-- Listening indicator -->
-    <div class="listening-bar" id="listening-bar" aria-live="polite">
-      <div class="listening-dots">
-        <div class="listening-dot"></div>
-        <div class="listening-dot"></div>
-        <div class="listening-dot"></div>
+    <!-- Stats row for returning users -->
+    <div class="stats-row" id="oracle-stats" aria-label="Reading stats" style="display:none">
+      <div class="stat">
+        <div class="stat-n" id="s-streak">0</div>
+        <div class="stat-l">Day streak</div>
       </div>
-      <span class="listening-text">Listening...</span>
+      <div class="stat">
+        <div class="stat-n" id="s-sess">0</div>
+        <div class="stat-l">Sessions</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" id="s-mins">0</div>
+        <div class="stat-l">Minutes read</div>
+      </div>
     </div>
 
-    <div class="oracle-meta-row">
-      <div class="time-label">How long do you have to read?</div>
-      <span class="char-count" id="char-count">500</span>
-    </div>
-
-    <div class="pills-inline" id="g-time" role="group" aria-label="Session length">
-      <button type="button" class="pill on" data-v="10">10 min</button>
-      <button type="button" class="pill" data-v="20">20 min</button>
-      <button type="button" class="pill" data-v="30">30 min</button>
-    </div>
-
-    <button type="button" class="spin-btn" id="oracle-btn" aria-label="Find my chapter">
-      Find my chapter
-    </button>
-
-    <!-- Loading state -->
-    <div class="oracle-loading" id="oracle-loading" aria-live="polite">
-      <div class="loading-dot"></div>
-      <div class="loading-dot"></div>
-      <div class="loading-dot"></div>
-    </div>
-  </section>
- <!-- Stats — moved below oracle intake -->
-  <div class="stats-row" aria-label="Reading stats">
-    <div class="stat">
-      <div class="stat-n" id="s-streak">0</div>
-      <div class="stat-l">Day streak</div>
-    </div>
-    <div class="stat">
-      <div class="stat-n" id="s-sess">0</div>
-      <div class="stat-l">Sessions</div>
-    </div>
-    <div class="stat">
-      <div class="stat-n" id="s-mins">0</div>
-      <div class="stat-l">Minutes read</div>
-    </div>
   </div>
-  <!-- Oracle Result Card -->
-  <section class="result-card oracle-card" id="result-card" aria-live="polite" aria-label="Your chapter">
 
-    <div class="oracle-mirror" id="r-mirror"></div>
-    <div class="oracle-name" id="r-name"></div>
-    <div class="oracle-offering" id="r-offering"></div>
 
-    <div class="book-block">
-      <div class="book-title" id="r-title"></div>
-      <div class="book-author" id="r-author"></div>
-      <div class="badges">
-        <span class="badge b-time" id="r-time"></span>
-        <span class="badge b-done" id="r-done">Read today</span>
+  <!-- ══════════════════════════════════════
+       SCREEN: LOADING
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-loading" style="display:none">
+
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>The oracle is listening</p>
+    </header>
+
+    <div class="loading-card">
+      <div class="loading-glyph" aria-hidden="true">✦</div>
+      <p class="loading-msg" id="loading-msg">Reading what you brought…</p>
+    </div>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       SCREEN: REVEAL CARD
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-reveal" style="display:none">
+
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>The oracle speaks</p>
+    </header>
+
+    <!-- Main reveal card -->
+    <section class="result-card visible" id="reveal-card" aria-live="polite">
+
+      <div class="oracle-label">✦ &nbsp;The oracle speaks</div>
+
+      <div class="book-title" id="rev-title"></div>
+      <div class="book-author" id="rev-author"></div>
+
+      <div class="oracle-message" id="rev-oracle-msg"></div>
+
+      <div class="page-box">
+        <div class="page-num" id="rev-page"></div>
+        <div class="page-sub" id="rev-page-sub"></div>
       </div>
-    </div>
 
-    <div class="page-box">
-      <div class="page-num" id="r-page"></div>
-      <div class="page-sub">suggested starting point</div>
-    </div>
+      <div class="badges" id="rev-badges">
+        <span class="badge b-format" id="rev-format-badge"></span>
+        <span class="badge b-done" id="rev-done" style="display:none">Marked read today ✓</span>
+      </div>
 
-    <div class="oracle-why" id="r-why"></div>
+      <!-- Audible link — shown only when format = audio -->
+      <a class="audible-link" id="rev-audible" href="#" target="_blank" rel="noopener" style="display:none">
+        Listen on Audible →
+      </a>
 
-    <div class="oracle-step-block">
-      <div class="oracle-step-label">After reading</div>
-      <div class="oracle-step" id="r-step"></div>
-    </div>
+      <div class="btn-row">
+        <button type="button" class="rr-btn mark-btn" id="rev-mark-btn">Mark read today</button>
+      </div>
+
+    </section>
+
+    <!-- Reflection -->
+    <div class="divider" aria-hidden="true"><span>reflection</span></div>
+
+    <section class="reflect-card" aria-label="Reflection">
+      <div class="card-head">What does this bring up for you?</div>
+      <textarea id="r-text" placeholder="Write a few thoughts after your session…" aria-label="Reflection notes"></textarea>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button type="button" class="save-btn" id="save-reflect-btn">Save reflection</button>
+        <span class="saved-ok" id="saved-ok" aria-live="polite" style="display:none">Saved ✓</span>
+      </div>
+    </section>
+
+    <!-- Action buttons -->
+    <div class="divider" aria-hidden="true"><span>what's next</span></div>
 
     <div class="btn-row">
-      <button type="button" class="rr-btn mark-btn" id="mark-btn">Mark read today</button>
-      <button type="button" class="rr-btn" id="new-reading-btn">Ask again</button>
+      <button type="button" class="rr-btn" id="ask-again-btn">Ask the oracle again</button>
+      <button type="button" class="rr-btn" id="reveal-edit-shelf-btn">Edit my shelf</button>
     </div>
-  </section>
 
-  <!-- Reflection -->
-  <div class="divider" aria-hidden="true"><span>reflection</span></div>
+  </div>
 
-  <section class="reflect-card" aria-label="Daily reflection">
-    <div class="card-head">Today's reflection</div>
-    <p class="reflect-prompt" id="r-prompt">Find your chapter above and your reflection prompt will appear here.</p>
 
-    <div class="textarea-wrap">
-<textarea
-        id="r-text"
-        class="oracle-textarea"
-        placeholder="Write a few thoughts after your session..."
-        aria-label="Reflection notes"
-        rows="4"
-      ></textarea>
-      <button
-        type="button"
-        class="mic-btn"
-        id="reflect-mic-btn"
-        aria-label="Speak your reflection"
-        title="Tap to speak"
-      >
-        <svg class="mic-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="9" y="2" width="6" height="11" rx="3" fill="currentColor"/>
-          <path d="M5 10a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
+  <!-- ══════════════════════════════════════
+       SCREEN: EDIT SHELF
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-edit-shelf" style="display:none">
+
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>Edit your shelf</p>
+    </header>
+
+    <div class="setup-intro">
+      <p class="setup-headline">Your shelf</p>
+      <p class="setup-sub">Keep at least 3 books. Changes take effect immediately.</p>
+    </div>
+
+    <div id="edit-book-rows"></div>
+
+    <button type="button" class="add-book-btn" id="edit-add-book-btn">+ Add another book</button>
+
+    <div class="shelf-progress" id="edit-shelf-progress"></div>
+
+    <div class="btn-row" style="margin-top:1.5rem">
+      <button type="button" class="spin-btn" id="edit-save-btn" disabled>
+        Save changes →
       </button>
+      <button type="button" class="rr-btn" id="edit-cancel-btn">Cancel</button>
     </div>
 
-    <!-- Listening indicator for reflection -->
-    <div class="listening-bar" id="reflect-listening-bar" aria-live="polite">
-      <div class="listening-dots">
-        <div class="listening-dot"></div>
-        <div class="listening-dot"></div>
-        <div class="listening-dot"></div>
-      </div>
-      <span class="listening-text">Listening...</span>
-    </div>
+  </div>
 
-    <div style="display:flex;align-items:center;">
-      <button type="button" class="save-btn" id="save-reflect-btn">Save reflection</button>
-      <span class="saved-ok" id="saved-ok" aria-live="polite">Saved.</span>
-    </div>
-  </section>
 
-  <!-- Reflection Journal -->
-  <div class="divider" aria-hidden="true"><span>journal</span></div>
-
-  <section class="log-card" aria-label="Reflection journal">
-    <div class="card-head">Your journal</div>
-    <div id="reflection-list">
-      <p class="log-empty">No reflections saved yet. Write something after your next session.</p>
-    </div>
-  </section>
-
-  <!-- Reading log -->
-  <div class="divider" aria-hidden="true"><span>reading log</span></div>
-
-  <section class="log-card" aria-label="Session history">
-    <div class="card-head">Session history</div>
-    <div id="log-list">
-      <p class="log-empty">No sessions yet. Find your first chapter to begin.</p>
-    </div>
-  </section>
-
-</main>
+</main><!-- /.rr -->
 
 <script src="script.js"></script>
 <script>
@@ -225,5 +278,6 @@
     });
   }
 </script>
+
 </body>
 </html>
