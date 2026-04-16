@@ -1,48 +1,7 @@
 /* The Right Chapter — script.js */
-
 'use strict';
 
-const BOOKS = [
-  { title: 'Daily Reflections', author: 'Alcoholics Anonymous', category: 'Recovery / Sobriety', pages: 400, moods: ['grounding', 'spiritual reset', 'practical sobriety help'] },
-  { title: 'The Four Agreements', author: 'Don Miguel Ruiz', category: 'Mindset / Personal Growth', pages: 160, moods: ['grounding', 'motivation', 'spiritual reset'] },
-  { title: 'The Alchemist', author: 'Paulo Coelho', category: 'Symbolic / Story-Based Inspiration', pages: 208, moods: ['motivation', 'creative spark', 'spiritual reset'] },
-  { title: 'Alcoholics Anonymous', author: 'Alcoholics Anonymous', category: 'Recovery / Sobriety', pages: 575, moods: ['grounding', 'practical sobriety help', 'spiritual reset'] },
-  { title: 'Becoming Supernatural', author: 'Dr. Joe Dispenza', category: 'Mindset / Personal Growth', pages: 380, moods: ['motivation', 'creative spark', 'spiritual reset'] },
-  { title: 'Alcohol Explained', author: 'William Porter', category: 'Recovery / Sobriety', pages: 200, moods: ['practical sobriety help', 'grounding'] },
-  { title: 'This Naked Mind', author: 'Annie Grace', category: 'Recovery / Sobriety', pages: 260, moods: ['practical sobriety help', 'motivation', 'grounding'] },
-  { title: 'Quit Drinking Without Willpower', author: 'Allen Carr', category: 'Recovery / Sobriety', pages: 288, moods: ['practical sobriety help', 'grounding'] },
-  { title: 'Quantum Success', author: 'Sandra Anne Taylor', category: 'Mindset / Personal Growth', pages: 256, moods: ['motivation', 'creative spark', 'money focus'] },
-  { title: 'Twelve Steps and Twelve Traditions', author: 'Alcoholics Anonymous', category: 'Recovery / Sobriety', pages: 192, moods: ['practical sobriety help', 'grounding', 'spiritual reset'] },
-  { title: 'The Road Less Traveled', author: 'M. Scott Peck', category: 'Mindset / Personal Growth', pages: 316, moods: ['grounding', 'motivation', 'spiritual reset'] },
-  { title: 'Alcohol Explained 2', author: 'William Porter', category: 'Recovery / Sobriety', pages: 200, moods: ['practical sobriety help', 'grounding'] },
-  { title: 'Living Sober', author: 'Alcoholics Anonymous', category: 'Recovery / Sobriety', pages: 120, moods: ['practical sobriety help', 'grounding'] },
-  { title: 'The Automatic Millionaire', author: 'David Bach', category: 'Money / Life Stewardship', pages: 240, moods: ['money focus', 'motivation'] },
-  { title: 'The Energy of Money', author: 'Maria Nemeth, Ph.D.', category: 'Money / Life Stewardship', pages: 304, moods: ['money focus', 'grounding', 'spiritual reset'] },
-  { title: 'The Red Road to Wellbriety', author: 'White Bison, Inc.', category: 'Spiritual / Reflection', pages: 200, moods: ['spiritual reset', 'grounding', 'practical sobriety help'] },
-  { title: 'The Holy Bible', author: 'Various', category: 'Spiritual / Reflection', pages: 1200, moods: ['spiritual reset', 'grounding', 'creative spark'] },
-  { title: 'Atomic Habits', author: 'James Clear', category: 'Mindset / Personal Growth', pages: 320, moods: ['motivation', 'grounding', 'money focus'] },
-];
-
-const PROMPTS = {
-  grounding:                'What did you read that helped you feel more settled and present?',
-  motivation:               'What line or idea fired you up? How will you act on it today?',
-  'spiritual reset':        'What did the reading stir in you spiritually? What do you want to carry forward?',
-  'practical sobriety help':'What tool or insight from this reading can you use today?',
-  'creative spark':         'What idea surprised you or opened a new door in your thinking?',
-  'money focus':            'What one financial habit or mindset shift does this reading suggest?',
-  any:                      'What stood out to you? What will you take into your day?',
-};
-
-const NOTES = {
-  grounding:                'a grounding read — a good anchor for right now.',
-  motivation:               'a motivational pick — good fuel for what\'s ahead.',
-  'spiritual reset':        'a spiritual reset — gives your soul some breathing room.',
-  'practical sobriety help':'practical recovery support — solid tools for today.',
-  'creative spark':         'a creative spark — opens new doors.',
-  'money focus':            'a money and stewardship focus — a good mindset shift.',
-  any:                      'a balanced pick that fits where you are today.',
-};
-
+/* ── State ── */
 const STORAGE_KEY = 'the_right_chapter_v1';
 let state = load();
 let current = null;
@@ -61,17 +20,18 @@ function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
 }
 
+/* ── Helpers ── */
 function today() { return new Date().toISOString().split('T')[0]; }
-function rpage(book) { return Math.floor(Math.random() * (book.pages - 1)) + 1; }
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function getSelected(groupId) {
   const el = document.querySelector('#' + groupId + ' .pill.on');
-  return el ? el.dataset.v : 'any';
+  return el ? el.dataset.v : '10';
 }
 
+/* ── Pills ── */
 function initPills() {
-  document.querySelectorAll('.pills').forEach(group => {
+  document.querySelectorAll('.pills-inline').forEach(group => {
     group.addEventListener('click', e => {
       const pill = e.target.closest('.pill');
       if (!pill) return;
@@ -81,73 +41,95 @@ function initPills() {
   });
 }
 
-function spin() {
-  const mood = getSelected('g-mood');
-  const time = parseInt(getSelected('g-time') || '10', 10);
-
-  let pool = BOOKS.filter(b => {
-    if (getSelected('g-cat') !== 'any' && b.category !== getSelected('g-cat')) return false;
-    if (mood !== 'any' && !b.moods.includes(mood)) return false;
-    return true;
+/* ── Character counter ── */
+function initCharCount() {
+  const input = document.getElementById('oracle-input');
+  const counter = document.getElementById('char-count');
+  if (!input || !counter) return;
+  input.addEventListener('input', () => {
+    const remaining = 500 - input.value.length;
+    counter.textContent = remaining;
+    counter.style.color = remaining < 50 ? 'var(--brass)' : 'var(--ink-4)';
   });
-  if (!pool.length) pool = BOOKS;
+}
 
-  let book = rand(pool);
-  if (current && pool.length > 1) {
-    let tries = 0;
-    while (book.title === current.title && tries < 10) { book = rand(pool); tries++; }
+/* ── Oracle call ── */
+async function callOracle() {
+  const input = document.getElementById('oracle-input');
+  const userText = input ? input.value.trim() : '';
+
+  if (userText.length < 5) {
+    input.focus();
+    input.style.borderColor = 'var(--brass)';
+    setTimeout(() => { input.style.borderColor = ''; }, 2000);
+    return;
   }
 
-  current = { ...book, page: rpage(book), time, mood };
-  renderResult();
-  updatePrompt(mood);
-  logSession();
-}
+  const btn = document.getElementById('oracle-btn');
+  const loading = document.getElementById('oracle-loading');
+  const card = document.getElementById('result-card');
 
-function rerollPage() {
-  if (!current) return;
-  current.page = rpage(current);
-  document.getElementById('r-page').textContent = current.page;
-}
+  // Show loading state
+  btn.disabled = true;
+  btn.textContent = 'Listening...';
+  if (loading) loading.classList.add('visible');
+  if (card) card.classList.remove('visible');
 
-function markRead() {
-  const td = today();
-  if (state.markedDates.includes(td)) return;
-  state.markedDates.push(td);
+  try {
+    const response = await fetch('/api/oracle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userInput: userText })
+    });
 
-  const yest = new Date(); yest.setDate(yest.getDate() - 1);
-  const yStr = yest.toISOString().split('T')[0];
-  if (state.lastDate === yStr) {
-    state.streak++;
-  } else if (state.lastDate !== td) {
-    state.streak = 1;
+    const data = await response.json();
+
+    if (!response.ok || !data.oracle) {
+      throw new Error(data.error || 'The oracle is resting.');
+    }
+
+    const oracle = data.oracle;
+    const time = parseInt(getSelected('g-time') || '10', 10);
+
+    current = {
+      title: oracle.book,
+      author: oracle.author,
+      page: oracle.page,
+      time,
+      userInput: userText,
+      mirror: oracle.mirror,
+      name: oracle.name,
+      offering: oracle.offering,
+      whyThisFits: oracle.whyThisFits,
+      singleStep: oracle.singleStep,
+      reflectionPrompt: oracle.reflectionPrompt,
+    };
+
+    renderOracle(oracle, time);
+    logSession();
+
+  } catch (err) {
+    console.error('Oracle error:', err);
+    showError(err.message || 'Something went quiet. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Find my chapter';
+    if (loading) loading.classList.remove('visible');
   }
-  state.lastDate = td;
-
-  if (state.log.length) { state.log[0].marked = true; }
-
-  save();
-  renderStats();
-  renderLog();
-  setMarkDone();
 }
 
-function setMarkDone() {
-  const btn = document.getElementById('mark-btn');
-  btn.textContent = 'Read today ✓';
-  btn.classList.add('done');
-  document.getElementById('r-done').style.display = 'inline';
-}
-
-function renderResult() {
-  const b = current;
-  document.getElementById('r-title').textContent  = b.title;
-  document.getElementById('r-author').textContent = b.author;
-  document.getElementById('r-cat').textContent    = b.category;
-  document.getElementById('r-time').textContent   = b.time + ' min session';
-  document.getElementById('r-mood').textContent   = b.mood === 'any' ? 'open pick' : b.mood;
-  document.getElementById('r-page').textContent   = b.page;
-  document.getElementById('r-note').textContent   = 'This is ' + (NOTES[b.mood] || NOTES.any);
+/* ── Render oracle response ── */
+function renderOracle(oracle, time) {
+  document.getElementById('r-mirror').textContent   = oracle.mirror;
+  document.getElementById('r-name').textContent     = oracle.name;
+  document.getElementById('r-offering').textContent = oracle.offering;
+  document.getElementById('r-title').textContent    = oracle.book;
+  document.getElementById('r-author').textContent   = oracle.author;
+  document.getElementById('r-page').textContent     = oracle.page;
+  document.getElementById('r-time').textContent     = time + ' min session';
+  document.getElementById('r-why').textContent      = oracle.whyThisFits;
+  document.getElementById('r-step').textContent     = oracle.singleStep;
+  document.getElementById('r-prompt').textContent   = oracle.reflectionPrompt;
 
   const td  = today();
   const btn = document.getElementById('mark-btn');
@@ -163,15 +145,59 @@ function renderResult() {
     dne.style.display = 'none';
   }
 
-  document.getElementById('result-card').classList.add('visible');
+  // Animate card in
+  const card = document.getElementById('result-card');
+  card.classList.add('visible');
+  setTimeout(() => {
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
 }
 
-function updatePrompt(mood) {
-  document.getElementById('r-prompt').textContent = PROMPTS[mood] || PROMPTS.any;
-  document.getElementById('r-text').value = '';
-  document.getElementById('saved-ok').style.display = 'none';
+/* ── Error display ── */
+function showError(message) {
+  const card = document.getElementById('result-card');
+  document.getElementById('r-mirror').textContent = message;
+  document.getElementById('r-name').textContent = '';
+  document.getElementById('r-offering').textContent = '';
+  document.getElementById('r-title').textContent = '';
+  document.getElementById('r-author').textContent = '';
+  document.getElementById('r-page').textContent = '';
+  document.getElementById('r-time').textContent = '';
+  document.getElementById('r-why').textContent = '';
+  document.getElementById('r-step').textContent = '';
+  card.classList.add('visible');
 }
 
+/* ── Mark read ── */
+function markRead() {
+  const td = today();
+  if (state.markedDates.includes(td)) return;
+  state.markedDates.push(td);
+
+  const yest = new Date();
+  yest.setDate(yest.getDate() - 1);
+  const yStr = yest.toISOString().split('T')[0];
+
+  if (state.lastDate === yStr) {
+    state.streak++;
+  } else if (state.lastDate !== td) {
+    state.streak = 1;
+  }
+  state.lastDate = td;
+
+  if (state.log.length) { state.log[0].marked = true; }
+
+  save();
+  renderStats();
+  renderLog();
+
+  const btn = document.getElementById('mark-btn');
+  btn.textContent = 'Read today ✓';
+  btn.classList.add('done');
+  document.getElementById('r-done').style.display = 'inline';
+}
+
+/* ── Save reflection ── */
 function saveReflect() {
   const val = document.getElementById('r-text').value.trim();
   if (!val) return;
@@ -182,12 +208,15 @@ function saveReflect() {
   setTimeout(() => { ok.style.display = 'none'; }, 2200);
 }
 
+/* ── Log session ── */
 function logSession() {
+  if (!current) return;
   const now = new Date();
   const td  = today();
 
   if (state.lastDate !== td) {
-    const yest = new Date(); yest.setDate(yest.getDate() - 1);
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
     const yStr = yest.toISOString().split('T')[0];
     if (!state.markedDates.includes(td)) {
       if (state.lastDate !== yStr) state.streak = Math.max(state.streak, 1);
@@ -199,14 +228,15 @@ function logSession() {
   state.mins += current.time;
 
   state.log.unshift({
-    date:   now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    time:   now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-    title:  current.title,
-    page:   current.page,
-    mood:   current.mood,
-    mins:   current.time,
-    marked: false,
+    date:    now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    time:    now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+    title:   current.title,
+    page:    current.page,
+    mins:    current.time,
+    input:   current.userInput ? current.userInput.slice(0, 60) + '...' : '',
+    marked:  false,
   });
+
   if (state.log.length > 30) state.log.pop();
 
   save();
@@ -214,12 +244,14 @@ function logSession() {
   renderLog();
 }
 
+/* ── Render stats ── */
 function renderStats() {
   document.getElementById('s-streak').textContent = state.streak;
   document.getElementById('s-sess').textContent   = state.sessions;
   document.getElementById('s-mins').textContent   = state.mins;
 }
 
+/* ── Render log ── */
 function renderLog() {
   const el = document.getElementById('log-list');
   if (!state.log.length) {
@@ -229,10 +261,10 @@ function renderLog() {
   el.innerHTML = state.log.slice(0, 10).map(e => `
     <div class="log-entry">
       <div class="log-book">${e.title}</div>
+      ${e.input ? `<div class="log-input">"${e.input}"</div>` : ''}
       <div class="log-meta">
         <span>${e.date} &middot; ${e.time}</span>
         <span class="log-pill">p.${e.page}</span>
-        ${e.mood && e.mood !== 'any' ? `<span class="log-pill">${e.mood}</span>` : ''}
         <span>${e.mins} min</span>
         ${e.marked ? '<span class="log-pill green">read ✓</span>' : ''}
       </div>
@@ -240,13 +272,34 @@ function renderLog() {
   `).join('');
 }
 
+/* ── Reset input ── */
+function resetOracle() {
+  const input = document.getElementById('oracle-input');
+  if (input) {
+    input.value = '';
+    const counter = document.getElementById('char-count');
+    if (counter) counter.textContent = '500';
+    input.focus();
+  }
+  document.getElementById('result-card').classList.remove('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ── Boot ── */
 document.addEventListener('DOMContentLoaded', () => {
   initPills();
-  document.getElementById('spin-btn').addEventListener('click', spin);
-  document.getElementById('reroll-page-btn').addEventListener('click', rerollPage);
-  document.getElementById('reroll-book-btn').addEventListener('click', spin);
+  initCharCount();
+
+  document.getElementById('oracle-btn').addEventListener('click', callOracle);
   document.getElementById('mark-btn').addEventListener('click', markRead);
   document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
+  document.getElementById('new-reading-btn').addEventListener('click', resetOracle);
+
+  // Allow Ctrl+Enter or Cmd+Enter to submit
+  document.getElementById('oracle-input').addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') callOracle();
+  });
+
   renderStats();
   renderLog();
 });
