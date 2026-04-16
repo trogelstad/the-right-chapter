@@ -1,10 +1,12 @@
-/* The Right Chapter — script.js */
+/* The Right Chapter — script.js v3 */
 'use strict';
 
 /* ── State ── */
 const STORAGE_KEY = 'the_right_chapter_v1';
 let state = load();
 let current = null;
+let recognition = null;
+let isListening = false;
 
 function load() {
   try {
@@ -22,7 +24,6 @@ function save() {
 
 /* ── Helpers ── */
 function today() { return new Date().toISOString().split('T')[0]; }
-function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function getSelected(groupId) {
   const el = document.querySelector('#' + groupId + ' .pill.on');
@@ -53,23 +54,109 @@ function initCharCount() {
   });
 }
 
+/* ── Voice / Mic ── */
+function initMic() {
+  const micBtn = document.getElementById('mic-btn');
+  if (!micBtn) return;
+
+  // Check browser support
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    micBtn.style.display = 'none';
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('listening');
+    showListening(true);
+  };
+
+  recognition.onresult = (e) => {
+    const input = document.getElementById('oracle-input');
+    const counter = document.getElementById('char-count');
+    let transcript = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      transcript += e.results[i][0].transcript;
+    }
+    if (input) {
+      input.value = transcript;
+      if (counter) {
+        const remaining = 500 - transcript.length;
+        counter.textContent = remaining;
+        counter.style.color = remaining < 50 ? 'var(--brass)' : 'var(--ink-4)';
+      }
+    }
+  };
+
+  recognition.onerror = (e) => {
+    console.error('Speech error:', e.error);
+    stopListening();
+  };
+
+  recognition.onend = () => {
+    stopListening();
+  };
+
+  micBtn.addEventListener('click', () => {
+    if (isListening) {
+      recognition.stop();
+    } else {
+      try {
+        recognition.start();
+      } catch (err) {
+        console.error('Mic error:', err);
+      }
+    }
+  });
+}
+
+function stopListening() {
+  isListening = false;
+  const micBtn = document.getElementById('mic-btn');
+  if (micBtn) micBtn.classList.remove('listening');
+  showListening(false);
+}
+
+function showListening(show) {
+  const bar = document.getElementById('listening-bar');
+  if (bar) {
+    if (show) {
+      bar.classList.add('visible');
+    } else {
+      bar.classList.remove('visible');
+    }
+  }
+}
+
 /* ── Oracle call ── */
 async function callOracle() {
   const input = document.getElementById('oracle-input');
   const userText = input ? input.value.trim() : '';
 
   if (userText.length < 5) {
-    input.focus();
-    input.style.borderColor = 'var(--brass)';
-    setTimeout(() => { input.style.borderColor = ''; }, 2000);
+    if (input) {
+      input.focus();
+      input.style.borderColor = 'var(--brass)';
+      setTimeout(() => { input.style.borderColor = ''; }, 2000);
+    }
     return;
+  }
+
+  // Stop mic if listening
+  if (isListening && recognition) {
+    recognition.stop();
   }
 
   const btn = document.getElementById('oracle-btn');
   const loading = document.getElementById('oracle-loading');
   const card = document.getElementById('result-card');
 
-  // Show loading state
   btn.disabled = true;
   btn.textContent = 'Listening...';
   if (loading) loading.classList.add('visible');
@@ -92,16 +179,16 @@ async function callOracle() {
     const time = parseInt(getSelected('g-time') || '10', 10);
 
     current = {
-      title: oracle.book,
-      author: oracle.author,
-      page: oracle.page,
+      title:            oracle.book,
+      author:           oracle.author,
+      page:             oracle.page,
       time,
-      userInput: userText,
-      mirror: oracle.mirror,
-      name: oracle.name,
-      offering: oracle.offering,
-      whyThisFits: oracle.whyThisFits,
-      singleStep: oracle.singleStep,
+      userInput:        userText,
+      mirror:           oracle.mirror,
+      name:             oracle.name,
+      offering:         oracle.offering,
+      whyThisFits:      oracle.whyThisFits,
+      singleStep:       oracle.singleStep,
       reflectionPrompt: oracle.reflectionPrompt,
     };
 
@@ -145,7 +232,6 @@ function renderOracle(oracle, time) {
     dne.style.display = 'none';
   }
 
-  // Animate card in
   const card = document.getElementById('result-card');
   card.classList.add('visible');
   setTimeout(() => {
@@ -155,17 +241,16 @@ function renderOracle(oracle, time) {
 
 /* ── Error display ── */
 function showError(message) {
-  const card = document.getElementById('result-card');
-  document.getElementById('r-mirror').textContent = message;
-  document.getElementById('r-name').textContent = '';
+  document.getElementById('r-mirror').textContent   = message;
+  document.getElementById('r-name').textContent     = '';
   document.getElementById('r-offering').textContent = '';
-  document.getElementById('r-title').textContent = '';
-  document.getElementById('r-author').textContent = '';
-  document.getElementById('r-page').textContent = '';
-  document.getElementById('r-time').textContent = '';
-  document.getElementById('r-why').textContent = '';
-  document.getElementById('r-step').textContent = '';
-  card.classList.add('visible');
+  document.getElementById('r-title').textContent    = '';
+  document.getElementById('r-author').textContent   = '';
+  document.getElementById('r-page').textContent     = '';
+  document.getElementById('r-time').textContent     = '';
+  document.getElementById('r-why').textContent      = '';
+  document.getElementById('r-step').textContent     = '';
+  document.getElementById('result-card').classList.add('visible');
 }
 
 /* ── Mark read ── */
@@ -228,13 +313,13 @@ function logSession() {
   state.mins += current.time;
 
   state.log.unshift({
-    date:    now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    time:    now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-    title:   current.title,
-    page:    current.page,
-    mins:    current.time,
-    input:   current.userInput ? current.userInput.slice(0, 60) + '...' : '',
-    marked:  false,
+    date:   now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    time:   now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+    title:  current.title,
+    page:   current.page,
+    mins:   current.time,
+    input:  current.userInput ? current.userInput.slice(0, 60) + '...' : '',
+    marked: false,
   });
 
   if (state.log.length > 30) state.log.pop();
@@ -272,7 +357,7 @@ function renderLog() {
   `).join('');
 }
 
-/* ── Reset input ── */
+/* ── Reset ── */
 function resetOracle() {
   const input = document.getElementById('oracle-input');
   if (input) {
@@ -289,13 +374,13 @@ function resetOracle() {
 document.addEventListener('DOMContentLoaded', () => {
   initPills();
   initCharCount();
+  initMic();
 
   document.getElementById('oracle-btn').addEventListener('click', callOracle);
   document.getElementById('mark-btn').addEventListener('click', markRead);
   document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
   document.getElementById('new-reading-btn').addEventListener('click', resetOracle);
 
-  // Allow Ctrl+Enter or Cmd+Enter to submit
   document.getElementById('oracle-input').addEventListener('keydown', e => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') callOracle();
   });
