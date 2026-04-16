@@ -1,6 +1,6 @@
 /* The Right Chapter — sw.js (service worker) */
 
-const CACHE = 'trc-v6';
+const CACHE = 'trc-v7';
 const ASSETS = ['/', '/index.html', '/style.css', '/script.js', '/manifest.json'];
 
 self.addEventListener('install', e => {
