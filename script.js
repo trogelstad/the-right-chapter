@@ -1,4 +1,4 @@
-/* The Right Chapter — script.js v5 — clean build */
+/* The Right Chapter — script.js v7 */
 'use strict';
 
 /* ── State ── */
@@ -58,11 +58,20 @@ function initCharCount() {
   });
 }
 
+/* ── Detect platform ── */
+function isAndroid() {
+  return /android/i.test(navigator.userAgent);
+}
+
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
 /* ═══════════════════════════════════════════
-   initMic — reusable for any textarea + mic btn
-   micBtnId      — id of the mic button
-   inputId       — id of the textarea to populate
-   listeningBarId — id of the listening indicator bar
+   initMic — fully isolated per instance
+   micBtnId       — id of mic button
+   inputId        — id of textarea to populate
+   listeningBarId — id of listening bar
 ═══════════════════════════════════════════ */
 function initMic(micBtnId, inputId, listeningBarId) {
   const micBtn = document.getElementById(micBtnId);
@@ -74,12 +83,12 @@ function initMic(micBtnId, inputId, listeningBarId) {
     micBtn.style.opacity = '0.4';
     micBtn.title = 'Voice input not supported in this browser';
     micBtn.addEventListener('click', () => {
-      alert('Voice input works best in Chrome on desktop or Safari on iOS.');
+      alert('Voice input works best in Chrome on Android or Safari on iOS.');
     });
     return;
   }
 
-  /* ── internal state ── */
+  /* ── isolated state ── */
   let silenceTimer   = null;
   let fullTranscript = '';
   let shouldListen   = false;
@@ -87,19 +96,17 @@ function initMic(micBtnId, inputId, listeningBarId) {
   let activeRecog    = null;
   const SILENCE_MS   = 9000;
 
-  /* ── helpers ── */
+  /* ── UI helpers ── */
   function showBar(show) {
     const bar = document.getElementById(listeningBarId);
     if (!bar) return;
-    if (show) { bar.classList.add('visible'); }
-    else      { bar.classList.remove('visible'); }
+    bar.classList.toggle('visible', show);
   }
 
   function updateField(text) {
     const input = document.getElementById(inputId);
-    if (!input || !text) return;
+    if (!input) return;
     input.value = text;
-    // only update char counter for oracle input
     if (inputId === 'oracle-input') {
       const counter = document.getElementById('char-count');
       if (counter) {
@@ -110,7 +117,8 @@ function initMic(micBtnId, inputId, listeningBarId) {
     }
   }
 
-function resetSilenceTimer() {
+  /* ── silence timer ── */
+  function resetSilenceTimer() {
     if (silenceTimer) clearTimeout(silenceTimer);
     silenceTimer = setTimeout(() => {
       shouldListen = false;
@@ -123,6 +131,7 @@ function resetSilenceTimer() {
     if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
   }
 
+  /* ── hard stop ── */
   function hardStop() {
     shouldListen = false;
     isActive     = false;
@@ -131,24 +140,23 @@ function resetSilenceTimer() {
     showBar(false);
   }
 
-  /* ── build fresh recognition instance ── */
-  /* Mobile Safari always fires onend after each utterance.           */
-  /* We rebuild and restart until shouldListen = false or silence.    */
+  /* ── build recognition instance ── */
   function buildAndStart() {
-    if (!shouldListen) return;
+    if (!shouldListen) { hardStop(); return; }
 
     const r = new SpeechRecognition();
-    r.continuous      = false;
-    r.interimResults  = true;
-    r.lang            = 'en-US';
+
+    // Android Chrome handles continuous properly
+    // iOS Safari ignores it — we restart manually on onend
+    r.continuous     = isAndroid() ? true : false;
+    r.interimResults = true;
+    r.lang           = 'en-US';
     r.maxAlternatives = 1;
 
     r.onstart = () => {
-      if (!isActive) {
-        isActive = true;
-        micBtn.classList.add('listening');
-        showBar(true);
-      }
+      isActive = true;
+      micBtn.classList.add('listening');
+      showBar(true);
       resetSilenceTimer();
     };
 
@@ -170,26 +178,32 @@ function resetSilenceTimer() {
         fullTranscript += (fullTranscript ? ' ' : '') + finalChunk.trim();
       }
 
-      updateField(fullTranscript + (interimChunk ? ' ' + interimChunk : ''));
+      const display = fullTranscript + (interimChunk ? ' ' + interimChunk : '');
+      if (display.trim()) updateField(display);
     };
 
     r.onerror = (e) => {
+      console.warn('Speech error:', e.error);
       if (e.error === 'not-allowed') {
         hardStop();
         alert('Microphone access was denied. Please allow it in your browser settings.');
       }
-      // 'no-speech' and others: silence timer handles shutdown
+      // other errors: silence timer handles shutdown
     };
 
     r.onend = () => {
-      // Mobile fires onend constantly — restart if we should still be listening
-      if (shouldListen) {
+      activeRecog = null;
+      // On iOS/desktop: restart if still should be listening
+      // On Android with continuous=true: onend means user stopped or error
+      if (shouldListen && !isAndroid()) {
         setTimeout(() => {
           if (shouldListen) buildAndStart();
-        }, 100);
-      } else {
+          else hardStop();
+        }, 120);
+      } else if (!shouldListen) {
         hardStop();
       }
+      // Android with continuous=true: silence timer will call hardStop
     };
 
     activeRecog = r;
@@ -197,8 +211,12 @@ function resetSilenceTimer() {
     try {
       r.start();
     } catch (err) {
-      console.warn('Recognition start error:', err);
-      setTimeout(() => { if (shouldListen) buildAndStart(); }, 200);
+      console.warn('Start error:', err.message);
+      activeRecog = null;
+      setTimeout(() => {
+        if (shouldListen) buildAndStart();
+        else hardStop();
+      }, 250);
     }
   }
 
@@ -207,24 +225,26 @@ function resetSilenceTimer() {
     if (isActive || shouldListen) {
       shouldListen = false;
       try { if (activeRecog) activeRecog.stop(); } catch (_) {}
-      hardStop();
+      setTimeout(hardStop, 150);
       return;
     }
 
     fullTranscript = '';
     shouldListen   = true;
 
-    const startListening = () => { buildAndStart(); };
-
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    // Android Chrome: skip getUserMedia — it handles permissions internally
+    // iOS/Desktop: request explicitly first
+    if (isAndroid()) {
+      buildAndStart();
+    } else if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(startListening)
+        .then(() => buildAndStart())
         .catch(() => {
           shouldListen = false;
           alert('Please allow microphone access to use voice input.');
         });
     } else {
-      startListening();
+      buildAndStart();
     }
   });
 }
@@ -377,7 +397,14 @@ function saveReflect() {
   const val = document.getElementById('r-text').value.trim();
   if (!val) return;
 
-  state.reflections[today()] = val;
+  // Save as object with book context
+  state.reflections[today()] = {
+    text:   val,
+    book:   current ? current.title  : null,
+    author: current ? current.author : null,
+    page:   current ? current.page   : null,
+  };
+
   save();
 
   const ok = document.getElementById('saved-ok');
@@ -468,14 +495,21 @@ function renderReflections() {
     return;
   }
 
-  el.innerHTML = entries.map(([date, text]) => {
+  el.innerHTML = entries.map(([date, entry]) => {
     const d     = new Date(date + 'T12:00:00');
     const label = d.toLocaleDateString('en-US', {
       month: 'long', day: 'numeric', year: 'numeric'
     });
+
+    // Handle both old string format and new object format
+    const text   = typeof entry === 'string' ? entry : (entry.text   || '');
+    const book   = typeof entry === 'object'  ? (entry.book   || null) : null;
+    const page   = typeof entry === 'object'  ? (entry.page   || null) : null;
+
     return `
       <div class="reflection-entry">
         <div class="reflection-date">${label}</div>
+        ${book ? `<div class="reflection-book">${book}${page ? ' &middot; p.' + page : ''}</div>` : ''}
         <div class="reflection-text">${text}</div>
       </div>
     `;
@@ -500,11 +534,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initPills();
   initCharCount();
 
-  // Init mic for oracle input
-  initMic('mic-btn', 'oracle-input', 'listening-bar');
-
-  // Init mic for reflection input
-  initMic('reflect-mic-btn', 'r-text', 'reflect-listening-bar');
+  initMic('mic-btn',         'oracle-input', 'listening-bar');
+  initMic('reflect-mic-btn', 'r-text',       'reflect-listening-bar');
 
   document.getElementById('oracle-btn').addEventListener('click', callOracle);
   document.getElementById('mark-btn').addEventListener('click', markRead);
