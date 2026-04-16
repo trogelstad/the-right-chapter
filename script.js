@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════
    The Right Chapter — script.js
-   Version 2.0 · Stage 1: Screen router + shelf setup
+   Version 2.0 · Stage 3: Oracle API connected
 ═══════════════════════════════════════════ */
 
 'use strict';
@@ -12,7 +12,8 @@ const STATE_KEY   = 'trc_state';
 /* ── App state ── */
 let library  = null;
 let appState = null;
-let editReturnScreen = 'screen-oracle';
+let editReturnScreen  = 'screen-oracle';
+let lastOracleResult  = null;
 
 /* ═══════════════════════════════════════════
    SCREEN ROUTER
@@ -27,7 +28,7 @@ function showScreen(id) {
 }
 
 /* ═══════════════════════════════════════════
-   INIT — runs on page load
+   INIT
 ═══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   library  = loadLibrary();
@@ -87,18 +88,7 @@ function wireButtons() {
 
   /* ORACLE INTAKE */
   document.getElementById('oracle-input').addEventListener('input', onOracleInputChange);
-
-  document.getElementById('oracle-submit-btn').addEventListener('click', () => {
-    const input = document.getElementById('oracle-input').value.trim();
-    if (input.length < 5) return;
-    showScreen('screen-loading');
-    startLoadingMessages();
-    // Temporary placeholder — Stage 3 replaces this with the real API call
-    setTimeout(() => {
-      stopLoadingMessages();
-      showScreen('screen-oracle');
-    }, 3000);
-  });
+  document.getElementById('oracle-submit-btn').addEventListener('click', submitToOracle);
 
   document.getElementById('oracle-edit-shelf-btn').addEventListener('click', () => {
     editReturnScreen = 'screen-oracle';
@@ -145,6 +135,57 @@ function wireButtons() {
 }
 
 /* ═══════════════════════════════════════════
+   ORACLE — the main event
+═══════════════════════════════════════════ */
+async function submitToOracle() {
+  const input = document.getElementById('oracle-input').value.trim();
+  if (input.length < 5) return;
+
+  const lib = loadLibrary();
+  if (!lib || !lib.books || lib.books.length < 1) {
+    showScreen('screen-shelf-setup');
+    return;
+  }
+
+  showScreen('screen-loading');
+  startLoadingMessages();
+
+  try {
+    const response = await fetch('/api/oracle', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ input, books: lib.books })
+    });
+
+    stopLoadingMessages();
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      console.error('Oracle error:', errData);
+      showOracleError();
+      return;
+    }
+
+    const data = await response.json();
+    lastOracleResult = data;
+    logSession(data);
+    renderReveal(data);
+
+  } catch (err) {
+    console.error('Oracle fetch error:', err);
+    stopLoadingMessages();
+    showOracleError();
+  }
+}
+
+function showOracleError() {
+  showScreen('screen-oracle');
+  const btn = document.getElementById('oracle-submit-btn');
+  btn.textContent = 'The oracle went quiet — try again';
+  setTimeout(() => { btn.textContent = 'Find my chapter →'; }, 4000);
+}
+
+/* ═══════════════════════════════════════════
    SHELF SETUP
 ═══════════════════════════════════════════ */
 function initShelfSetup(existingBooks) {
@@ -159,27 +200,14 @@ function addBookRow(containerId, onChange, prefill = {}) {
   const container = document.getElementById(containerId);
   const row = document.createElement('div');
   row.className = 'book-row';
-
   const fmt = prefill.format || 'print';
 
   row.innerHTML = `
     <div class="book-row-fields">
-      <input
-        type="text"
-        class="book-title-input"
-        placeholder="Book title"
-        value="${escHtml(prefill.title || '')}"
-        aria-label="Book title"
-        autocomplete="off"
-      />
-      <input
-        type="text"
-        class="book-author-input"
-        placeholder="Author"
-        value="${escHtml(prefill.author || '')}"
-        aria-label="Author name"
-        autocomplete="off"
-      />
+      <input type="text" class="book-title-input" placeholder="Book title"
+        value="${escHtml(prefill.title || '')}" aria-label="Book title" autocomplete="off" />
+      <input type="text" class="book-author-input" placeholder="Author"
+        value="${escHtml(prefill.author || '')}" aria-label="Author name" autocomplete="off" />
     </div>
     <div class="book-row-meta">
       <div class="format-pills" role="group" aria-label="Format">
@@ -216,7 +244,7 @@ function addBookRow(containerId, onChange, prefill = {}) {
 }
 
 function collectBooks(containerId) {
-  const rows = document.querySelectorAll(`#${containerId} .book-row`);
+  const rows  = document.querySelectorAll(`#${containerId} .book-row`);
   const books = [];
   rows.forEach(row => {
     const title  = row.querySelector('.book-title-input').value.trim();
@@ -226,9 +254,7 @@ function collectBooks(containerId) {
     if (title && author) {
       books.push({
         id:      String(Date.now() + Math.random()),
-        title,
-        author,
-        format,
+        title, author, format,
         pages:   null,
         addedAt: today()
       });
@@ -246,20 +272,20 @@ function onEditRowChange() {
 }
 
 function updateShelfProgress(containerId, progressId, btnId) {
-  const books = collectBooks(containerId);
-  const count = books.length;
+  const books      = collectBooks(containerId);
+  const count      = books.length;
   const progressEl = document.getElementById(progressId);
   const btnEl      = document.getElementById(btnId);
 
   if (count === 0) {
     progressEl.textContent = '';
-    progressEl.className = 'shelf-progress';
+    progressEl.className   = 'shelf-progress';
   } else if (count < 3) {
     progressEl.textContent = `${count} book${count > 1 ? 's' : ''} added · need at least 3`;
-    progressEl.className = 'shelf-progress warn';
+    progressEl.className   = 'shelf-progress warn';
   } else {
     progressEl.textContent = `${count} book${count > 1 ? 's' : ''} on your shelf ✓`;
-    progressEl.className = 'shelf-progress ok';
+    progressEl.className   = 'shelf-progress ok';
   }
 
   if (btnEl) btnEl.disabled = count < 3;
@@ -269,7 +295,7 @@ function updateShelfProgress(containerId, progressId, btnId) {
    EDIT SHELF
 ═══════════════════════════════════════════ */
 function initEditShelf() {
-  const lib = loadLibrary();
+  const lib       = loadLibrary();
   const container = document.getElementById('edit-book-rows');
   container.innerHTML = '';
   const books = (lib && lib.books) ? lib.books : [];
@@ -284,7 +310,7 @@ function initEditShelf() {
 }
 
 /* ═══════════════════════════════════════════
-   SHELF CONFIRMATION DISPLAY
+   SHELF DISPLAY
 ═══════════════════════════════════════════ */
 function renderShelfDisplay(books, containerId) {
   const el = document.getElementById(containerId);
@@ -310,16 +336,16 @@ function onOracleInputChange() {
   btn.disabled = len < 5;
 
   if (len > 20) {
-    counter.textContent    = `${len} / 500`;
-    counter.style.display  = 'block';
+    counter.textContent   = `${len} / 500`;
+    counter.style.display = 'block';
   } else {
-    counter.style.display  = 'none';
+    counter.style.display = 'none';
   }
 }
 
 function updateOracleShelfLabel() {
-  const lib   = loadLibrary();
-  const count = (lib && lib.books) ? lib.books.length : 0;
+  const lib     = loadLibrary();
+  const count   = (lib && lib.books) ? lib.books.length : 0;
   const countEl = document.getElementById('oracle-shelf-count');
   const labelEl = document.getElementById('oracle-shelf-label');
   if (countEl) countEl.textContent = count;
@@ -340,7 +366,7 @@ let loadingIndex = 0;
 
 function startLoadingMessages() {
   loadingIndex = 0;
-  const msgEl = document.getElementById('loading-msg');
+  const msgEl  = document.getElementById('loading-msg');
   if (msgEl) msgEl.textContent = LOADING_MESSAGES[0];
   loadingTimer = setInterval(() => {
     loadingIndex = (loadingIndex + 1) % LOADING_MESSAGES.length;
@@ -362,8 +388,8 @@ function stopLoadingMessages() {
    REVEAL CARD
 ═══════════════════════════════════════════ */
 function renderReveal(data) {
-  document.getElementById('rev-title').textContent      = data.title        || '';
-  document.getElementById('rev-author').textContent     = data.author       || '';
+  document.getElementById('rev-title').textContent      = data.title         || '';
+  document.getElementById('rev-author').textContent     = data.author        || '';
   document.getElementById('rev-oracle-msg').textContent = data.oracleMessage || '';
 
   const pageEl    = document.getElementById('rev-page');
@@ -375,20 +401,20 @@ function renderReveal(data) {
     pageEl.textContent     = data.pageRef;
     pageSubEl.textContent  = 'suggested starting page';
   } else {
-    pageEl.style.fontSize  = '22px';
+    pageEl.style.fontSize  = '20px';
     pageEl.style.fontStyle = 'italic';
     pageEl.textContent     = data.pageRef;
     pageSubEl.textContent  = 'open here and let the page find you';
   }
 
-  const badgeEl = document.getElementById('rev-format-badge');
+  const badgeEl       = document.getElementById('rev-format-badge');
   badgeEl.textContent = formatLabel(data.format);
   badgeEl.className   = `badge b-format-${data.format || 'print'}`;
 
   const audibleEl = document.getElementById('rev-audible');
   if (data.format === 'audio') {
     const q = encodeURIComponent((data.title || '') + ' ' + (data.author || ''));
-    audibleEl.href         = `https://www.audible.com/search?keywords=${q}&tag=therightchap-20`;
+    audibleEl.href          = `https://www.audible.com/search?keywords=${q}&tag=therightchap-20`;
     audibleEl.style.display = 'block';
   } else {
     audibleEl.style.display = 'none';
@@ -406,7 +432,7 @@ function renderReveal(data) {
     doneEl.style.display = 'none';
   }
 
-  document.getElementById('r-text').value        = '';
+  document.getElementById('r-text').value           = '';
   document.getElementById('saved-ok').style.display = 'none';
 
   showScreen('screen-reveal');
@@ -435,7 +461,7 @@ function markRead() {
 
   document.getElementById('rev-mark-btn').textContent = 'Read today ✓';
   document.getElementById('rev-mark-btn').classList.add('done');
-  document.getElementById('rev-done').style.display = 'inline';
+  document.getElementById('rev-done').style.display   = 'inline';
 }
 
 /* ═══════════════════════════════════════════
@@ -449,6 +475,39 @@ function saveReflect() {
   const ok = document.getElementById('saved-ok');
   ok.style.display = 'inline';
   setTimeout(() => { ok.style.display = 'none'; }, 2200);
+}
+
+/* ═══════════════════════════════════════════
+   SESSION LOG
+═══════════════════════════════════════════ */
+function logSession(data) {
+  const now = new Date();
+  const td  = today();
+
+  if (appState.lastDate !== td) {
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    const yStr = yest.toISOString().split('T')[0];
+    if (appState.lastDate !== yStr) {
+      appState.streak = Math.max(appState.streak, 1);
+    }
+    appState.lastDate = td;
+  }
+
+  appState.sessions++;
+  appState.mins += 10;
+
+  appState.log.unshift({
+    date:    now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    time:    now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+    title:   data.title,
+    author:  data.author,
+    pageRef: data.pageRef,
+    marked:  false
+  });
+
+  if (appState.log.length > 30) appState.log.pop();
+  saveState();
 }
 
 /* ═══════════════════════════════════════════
