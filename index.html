@@ -21,10 +21,18 @@
 
 <main class="rr" role="main">
 
+  <!-- Header -->
   <header class="rr-head">
     <h1>The Right Chapter</h1>
     <p>The right chapter, right now.</p>
   </header>
+
+  <!-- Sacred Invitation -->
+  <section class="invitation" aria-label="Welcome">
+    <p class="invite-line">There is a chapter that was written for this moment.</p>
+    <p class="invite-line invite-accent">Not for everyone. For you. For today.</p>
+    <p class="invite-sub">Type or speak what you are carrying right now.<br>The right chapter will appear.</p>
+  </section>
 
   <!-- Stats -->
   <div class="stats-row" aria-label="Reading stats">
@@ -47,22 +55,51 @@
     <label class="oracle-question" for="oracle-input">
       What are you carrying right now?
     </label>
-    <textarea
-      id="oracle-input"
-      class="oracle-textarea"
-      placeholder="Write a few honest words. The right chapter will find you."
-      aria-label="What are you carrying right now"
-      rows="4"
-      maxlength="500"
-    ></textarea>
+
+    <div class="textarea-wrap">
+      <textarea
+        id="oracle-input"
+        class="oracle-textarea"
+        placeholder="A few honest words is enough..."
+        aria-label="What are you carrying right now"
+        rows="4"
+        maxlength="500"
+      ></textarea>
+      <button
+        type="button"
+        class="mic-btn"
+        id="mic-btn"
+        aria-label="Speak your answer"
+        title="Tap to speak"
+      >
+        <svg class="mic-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="9" y="2" width="6" height="11" rx="3" fill="currentColor"/>
+          <path d="M5 10a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Listening indicator -->
+    <div class="listening-bar" id="listening-bar" aria-live="polite">
+      <div class="listening-dots">
+        <div class="listening-dot"></div>
+        <div class="listening-dot"></div>
+        <div class="listening-dot"></div>
+      </div>
+      <span class="listening-text">Listening...</span>
+    </div>
 
     <div class="oracle-meta-row">
-      <div class="pills-inline" id="g-time" role="group" aria-label="Session length">
-        <button type="button" class="pill on" data-v="10">10 min</button>
-        <button type="button" class="pill" data-v="20">20 min</button>
-        <button type="button" class="pill" data-v="30">30 min</button>
-      </div>
+      <div class="time-label">How long do you have to read?</div>
       <span class="char-count" id="char-count">500</span>
+    </div>
+
+    <div class="pills-inline" id="g-time" role="group" aria-label="Session length">
+      <button type="button" class="pill on" data-v="10">10 min</button>
+      <button type="button" class="pill" data-v="20">20 min</button>
+      <button type="button" class="pill" data-v="30">30 min</button>
     </div>
 
     <button type="button" class="spin-btn" id="oracle-btn" aria-label="Find my chapter">
