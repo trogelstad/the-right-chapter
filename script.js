@@ -110,11 +110,12 @@ function initMic(micBtnId, inputId, listeningBarId) {
     }
   }
 
-  function resetSilenceTimer() {
+function resetSilenceTimer() {
     if (silenceTimer) clearTimeout(silenceTimer);
     silenceTimer = setTimeout(() => {
       shouldListen = false;
       try { if (activeRecog) activeRecog.stop(); } catch (_) {}
+      hardStop();
     }, SILENCE_MS);
   }
 
