@@ -980,7 +980,30 @@ textarea::placeholder { color: var(--ink-4); }
   font-style: italic;
   padding: 6px 0;
 }
+/* ── Reflection Journal entries ── */
+.reflection-entry {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
 
+.reflection-entry:last-child { border-bottom: none; }
+
+.reflection-date {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--plum);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 6px;
+}
+
+.reflection-text {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.75;
+  font-style: italic;
+  white-space: pre-wrap;
+}
 /* ── Responsive ── */
 @media (max-width: 540px) {
   .rr { padding: 2.5rem 1.1rem 5rem; }
