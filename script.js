@@ -93,10 +93,8 @@ function initMic() {
 
     r.onresult = (e) => {
       resetSilenceTimer();
-
       let interim = '';
       let final = '';
-
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) {
           final += e.results[i][0].transcript;
@@ -104,11 +102,9 @@ function initMic() {
           interim += e.results[i][0].transcript;
         }
       }
-
       if (final) {
         fullTranscript += (fullTranscript ? ' ' : '') + final.trim();
       }
-
       const display = fullTranscript + (interim ? ' ' + interim : '');
       updateInput(display);
     };
@@ -123,13 +119,11 @@ function initMic() {
     };
 
     r.onend = () => {
-      // If we should still be listening, restart immediately
       if (shouldBeListening) {
         try {
           recognition = buildRecognition();
           recognition.start();
         } catch(err) {
-          // small delay if start fails
           setTimeout(() => {
             if (shouldBeListening) {
               try {
@@ -187,7 +181,6 @@ function initMic() {
     } else {
       fullTranscript = '';
       shouldBeListening = true;
-
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia({ audio: true })
           .then(() => {
@@ -216,6 +209,8 @@ function initMic() {
 
   recognition = buildRecognition();
 }
+
+/* ── Stop / Show listening ── */
 function stopListening() {
   isListening = false;
   const micBtn = document.getElementById('mic-btn');
@@ -248,7 +243,6 @@ async function callOracle() {
     return;
   }
 
-  // Stop mic if listening
   if (isListening && recognition) {
     recognition.stop();
   }
@@ -386,11 +380,15 @@ function markRead() {
 function saveReflect() {
   const val = document.getElementById('r-text').value.trim();
   if (!val) return;
-  state.reflections[today()] = val;
+  const td = today();
+  state.reflections[td] = val;
   save();
+
   const ok = document.getElementById('saved-ok');
   ok.style.display = 'inline';
   setTimeout(() => { ok.style.display = 'none'; }, 2200);
+
+  renderReflections();
 }
 
 /* ── Log session ── */
@@ -457,6 +455,32 @@ function renderLog() {
   `).join('');
 }
 
+/* ── Render reflections ── */
+function renderReflections() {
+  const el = document.getElementById('reflection-list');
+  if (!el) return;
+
+  const entries = Object.entries(state.reflections)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .slice(0, 10);
+
+  if (!entries.length) {
+    el.innerHTML = '<p class="log-empty">No reflections saved yet. Write something after your next session.</p>';
+    return;
+  }
+
+  el.innerHTML = entries.map(([date, text]) => {
+    const d = new Date(date + 'T12:00:00');
+    const label = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    return `
+      <div class="reflection-entry">
+        <div class="reflection-date">${label}</div>
+        <div class="reflection-text">${text}</div>
+      </div>
+    `;
+  }).join('');
+}
+
 /* ── Reset ── */
 function resetOracle() {
   const input = document.getElementById('oracle-input');
@@ -487,4 +511,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderStats();
   renderLog();
+  renderReflections();
 });
