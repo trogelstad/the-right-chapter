@@ -1,4 +1,4 @@
-/* The Right Chapter — script.js v7 */
+/* The Right Chapter — script.js v8 */
 'use strict';
 
 /* ── State ── */
@@ -11,13 +11,27 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     const defaults = {
       streak: 0, sessions: 0, mins: 0,
-      lastDate: null, markedDates: [], log: [], reflections: {}
+      lastDate: null, markedDates: [], log: [], reflections: []
     };
-    return raw ? Object.assign(defaults, JSON.parse(raw)) : defaults;
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed) return defaults;
+    // migrate old object-format reflections to array
+    if (parsed.reflections && !Array.isArray(parsed.reflections)) {
+      parsed.reflections = Object.entries(parsed.reflections).map(([date, entry]) => ({
+        id:     date + '_migrated',
+        date,
+        time:   '',
+        text:   typeof entry === 'string' ? entry : (entry.text || ''),
+        book:   typeof entry === 'object' ? (entry.book   || null) : null,
+        author: typeof entry === 'object' ? (entry.author || null) : null,
+        page:   typeof entry === 'object' ? (entry.page   || null) : null,
+      }));
+    }
+    return Object.assign(defaults, parsed);
   } catch (_) {
     return {
       streak: 0, sessions: 0, mins: 0,
-      lastDate: null, markedDates: [], log: [], reflections: {}
+      lastDate: null, markedDates: [], log: [], reflections: []
     };
   }
 }
@@ -32,6 +46,10 @@ function today() { return new Date().toISOString().split('T')[0]; }
 function getSelected(groupId) {
   const el = document.querySelector('#' + groupId + ' .pill.on');
   return el ? el.dataset.v : '10';
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
 /* ── Pills ── */
@@ -58,21 +76,7 @@ function initCharCount() {
   });
 }
 
-/* ── Detect platform ── */
-function isAndroid() {
-  return /android/i.test(navigator.userAgent);
-}
-
-function isIOS() {
-  return /iphone|ipad|ipod/i.test(navigator.userAgent);
-}
-
-/* ═══════════════════════════════════════════
-   initMic — fully isolated per instance
-   micBtnId       — id of mic button
-   inputId        — id of textarea to populate
-   listeningBarId — id of listening bar
-═══════════════════════════════════════════ */
+/* ── Desktop mic only ── */
 function initMic(micBtnId, inputId, listeningBarId) {
   const micBtn = document.getElementById(micBtnId);
   if (!micBtn) return;
@@ -80,15 +84,10 @@ function initMic(micBtnId, inputId, listeningBarId) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
-    micBtn.style.opacity = '0.4';
-    micBtn.title = 'Voice input not supported in this browser';
-    micBtn.addEventListener('click', () => {
-      alert('Voice input works best in Chrome on Android or Safari on iOS.');
-    });
+    micBtn.style.display = 'none';
     return;
   }
 
-  /* ── isolated state ── */
   let silenceTimer   = null;
   let fullTranscript = '';
   let shouldListen   = false;
@@ -96,7 +95,6 @@ function initMic(micBtnId, inputId, listeningBarId) {
   let activeRecog    = null;
   const SILENCE_MS   = 9000;
 
-  /* ── UI helpers ── */
   function showBar(show) {
     const bar = document.getElementById(listeningBarId);
     if (!bar) return;
@@ -117,7 +115,6 @@ function initMic(micBtnId, inputId, listeningBarId) {
     }
   }
 
-  /* ── silence timer ── */
   function resetSilenceTimer() {
     if (silenceTimer) clearTimeout(silenceTimer);
     silenceTimer = setTimeout(() => {
@@ -131,26 +128,22 @@ function initMic(micBtnId, inputId, listeningBarId) {
     if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
   }
 
-  /* ── hard stop ── */
   function hardStop() {
     shouldListen = false;
     isActive     = false;
     clearSilenceTimer();
     micBtn.classList.remove('listening');
     showBar(false);
+    activeRecog = null;
   }
 
-  /* ── build recognition instance ── */
   function buildAndStart() {
     if (!shouldListen) { hardStop(); return; }
 
     const r = new SpeechRecognition();
-
-    // Android Chrome handles continuous properly
-    // iOS Safari ignores it — we restart manually on onend
-    r.continuous     = isAndroid() ? true : false;
-    r.interimResults = true;
-    r.lang           = 'en-US';
+    r.continuous      = false;
+    r.interimResults  = true;
+    r.lang            = 'en-US';
     r.maxAlternatives = 1;
 
     r.onstart = () => {
@@ -162,10 +155,8 @@ function initMic(micBtnId, inputId, listeningBarId) {
 
     r.onresult = (e) => {
       resetSilenceTimer();
-
-      let finalChunk   = '';
+      let finalChunk = '';
       let interimChunk = '';
-
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) {
           finalChunk += e.results[i][0].transcript;
@@ -173,45 +164,36 @@ function initMic(micBtnId, inputId, listeningBarId) {
           interimChunk += e.results[i][0].transcript;
         }
       }
-
       if (finalChunk) {
         fullTranscript += (fullTranscript ? ' ' : '') + finalChunk.trim();
       }
-
       const display = fullTranscript + (interimChunk ? ' ' + interimChunk : '');
       if (display.trim()) updateField(display);
     };
 
     r.onerror = (e) => {
-      console.warn('Speech error:', e.error);
       if (e.error === 'not-allowed') {
         hardStop();
         alert('Microphone access was denied. Please allow it in your browser settings.');
       }
-      // other errors: silence timer handles shutdown
     };
 
     r.onend = () => {
       activeRecog = null;
-      // On iOS/desktop: restart if still should be listening
-      // On Android with continuous=true: onend means user stopped or error
-      if (shouldListen && !isAndroid()) {
+      if (shouldListen) {
         setTimeout(() => {
           if (shouldListen) buildAndStart();
           else hardStop();
         }, 120);
-      } else if (!shouldListen) {
+      } else {
         hardStop();
       }
-      // Android with continuous=true: silence timer will call hardStop
     };
 
     activeRecog = r;
-
     try {
       r.start();
     } catch (err) {
-      console.warn('Start error:', err.message);
       activeRecog = null;
       setTimeout(() => {
         if (shouldListen) buildAndStart();
@@ -220,23 +202,28 @@ function initMic(micBtnId, inputId, listeningBarId) {
     }
   }
 
-  /* ── mic button click ── */
   micBtn.addEventListener('click', () => {
     if (isActive || shouldListen) {
+      // Toggle off — but preserve transcript so user can re-tap to continue
       shouldListen = false;
       try { if (activeRecog) activeRecog.stop(); } catch (_) {}
       setTimeout(hardStop, 150);
       return;
     }
 
-    fullTranscript = '';
-    shouldListen   = true;
+    // Re-tap to continue: don't clear fullTranscript
+    // Only clear if textarea is empty
+    const inputEl = document.getElementById(inputId);
+    if (!inputEl || !inputEl.value.trim()) {
+      fullTranscript = '';
+    } else {
+      // Resume from current textarea value
+      fullTranscript = inputEl.value.trim();
+    }
 
-    // Android Chrome: skip getUserMedia — it handles permissions internally
-    // iOS/Desktop: request explicitly first
-    if (isAndroid()) {
-      buildAndStart();
-    } else if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    shouldListen = true;
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(() => buildAndStart())
         .catch(() => {
@@ -289,6 +276,7 @@ async function callOracle() {
     const time   = parseInt(getSelected('g-time') || '10', 10);
 
     current = {
+      id:               uid(),
       title:            oracle.book,
       author:           oracle.author,
       page:             oracle.page,
@@ -332,15 +320,14 @@ function renderOracle(oracle, time) {
   const btn = document.getElementById('mark-btn');
   const dne = document.getElementById('r-done');
 
-  if (state.markedDates.includes(td)) {
-    btn.textContent = 'Read today ✓';
-    btn.classList.add('done');
-    dne.style.display = 'inline';
-  } else {
-    btn.textContent = 'Mark read today';
-    btn.classList.remove('done');
-    dne.style.display = 'none';
-  }
+  // Reset mark-read for new session
+  btn.textContent = 'Mark read today';
+  btn.classList.remove('done');
+  dne.style.display = 'none';
+
+  // Clear reflection textarea for new session
+  const rText = document.getElementById('r-text');
+  if (rText) rText.value = '';
 
   const card = document.getElementById('result-card');
   card.classList.add('visible');
@@ -397,19 +384,38 @@ function saveReflect() {
   const val = document.getElementById('r-text').value.trim();
   if (!val) return;
 
-  // Save as object with book context
-  state.reflections[today()] = {
+  const now = new Date();
+
+  // Each save creates a new entry tied to this session
+  const entry = {
+    id:     current ? current.id : uid(),
+    date:   today(),
+    time:   now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
     text:   val,
     book:   current ? current.title  : null,
     author: current ? current.author : null,
     page:   current ? current.page   : null,
   };
 
+  // Check if entry for this session already exists — update it
+  const existing = state.reflections.findIndex(r => r.id === entry.id);
+  if (existing >= 0) {
+    state.reflections[existing] = entry;
+  } else {
+    state.reflections.unshift(entry);
+  }
+
+  // Keep max 50 reflections
+  if (state.reflections.length > 50) state.reflections.pop();
+
   save();
 
   const ok = document.getElementById('saved-ok');
   ok.style.display = 'inline';
   setTimeout(() => { ok.style.display = 'none'; }, 2200);
+
+  // Clear textarea after save
+  document.getElementById('r-text').value = '';
 
   renderReflections();
 }
@@ -481,51 +487,92 @@ function renderLog() {
   `).join('');
 }
 
-/* ── Render reflection journal ── */
+/* ── Render reflection journal (accordion) ── */
 function renderReflections() {
   const el = document.getElementById('reflection-list');
   if (!el) return;
 
-  const entries = Object.entries(state.reflections)
-    .sort((a, b) => b[0].localeCompare(a[0]))
-    .slice(0, 10);
-
-  if (!entries.length) {
-    el.innerHTML = '<p class="log-empty">No reflections saved yet. Write something after your next session.</p>';
+  if (!state.reflections.length) {
+    el.innerHTML = '<p class="log-empty">No reflections yet. Write something after your next session.</p>';
     return;
   }
 
-  el.innerHTML = entries.map(([date, entry]) => {
-    const d     = new Date(date + 'T12:00:00');
+  el.innerHTML = state.reflections.slice(0, 30).map((entry, i) => {
+    const d     = new Date(entry.date + 'T12:00:00');
     const label = d.toLocaleDateString('en-US', {
       month: 'long', day: 'numeric', year: 'numeric'
     });
-
-    // Handle both old string format and new object format
-    const text   = typeof entry === 'string' ? entry : (entry.text   || '');
-    const book   = typeof entry === 'object'  ? (entry.book   || null) : null;
-    const page   = typeof entry === 'object'  ? (entry.page   || null) : null;
+    const timeLabel = entry.time ? ' · ' + entry.time : '';
+    const accordionId = 'reflection-acc-' + i;
 
     return `
-      <div class="reflection-entry">
-        <div class="reflection-date">${label}</div>
-        ${book ? `<div class="reflection-book">${book}${page ? ' &middot; p.' + page : ''}</div>` : ''}
-        <div class="reflection-text">${text}</div>
+      <div class="accordion-entry">
+        <button
+          type="button"
+          class="accordion-header"
+          aria-expanded="false"
+          aria-controls="${accordionId}"
+          onclick="toggleAccordion(this)"
+        >
+          <div class="accordion-meta">
+            <span class="accordion-date">${label}${timeLabel}</span>
+            ${entry.book ? `<span class="accordion-book">${entry.book}${entry.page ? ' · p.' + entry.page : ''}</span>` : ''}
+          </div>
+          <span class="accordion-chevron" aria-hidden="true">›</span>
+        </button>
+        <div class="accordion-body" id="${accordionId}" hidden>
+          <div class="reflection-text">${entry.text}</div>
+        </div>
       </div>
     `;
   }).join('');
 }
 
-/* ── Reset oracle ── */
+/* ── Accordion toggle ── */
+function toggleAccordion(btn) {
+  const expanded = btn.getAttribute('aria-expanded') === 'true';
+  const bodyId   = btn.getAttribute('aria-controls');
+  const body     = document.getElementById(bodyId);
+
+  btn.setAttribute('aria-expanded', !expanded);
+  btn.classList.toggle('open', !expanded);
+  if (body) body.hidden = expanded;
+}
+
+/* ── Reset oracle — full reset ── */
 function resetOracle() {
+  // Clear oracle input
   const input = document.getElementById('oracle-input');
   if (input) {
     input.value = '';
     const counter = document.getElementById('char-count');
     if (counter) counter.textContent = '500';
-    input.focus();
   }
-  document.getElementById('result-card').classList.remove('visible');
+
+  // Hide result card
+  const card = document.getElementById('result-card');
+  if (card) card.classList.remove('visible');
+
+  // Reset mark-read button
+  const markBtn = document.getElementById('mark-btn');
+  if (markBtn) {
+    markBtn.textContent = 'Mark read today';
+    markBtn.classList.remove('done');
+  }
+  const done = document.getElementById('r-done');
+  if (done) done.style.display = 'none';
+
+  // Clear reflection textarea
+  const rText = document.getElementById('r-text');
+  if (rText) rText.value = '';
+
+  // Reset reflection prompt
+  const prompt = document.getElementById('r-prompt');
+  if (prompt) prompt.textContent = 'Find your chapter above and your reflection prompt will appear here.';
+
+  // Clear current session
+  current = null;
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -534,6 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPills();
   initCharCount();
 
+  // Desktop mic only — mobile uses native keyboard mic
   initMic('mic-btn',         'oracle-input', 'listening-bar');
   initMic('reflect-mic-btn', 'r-text',       'reflect-listening-bar');
 
