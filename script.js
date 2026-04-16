@@ -115,12 +115,15 @@ function initMic(micBtnId, inputId, listeningBarId) {
     }
   }
 
-  function resetSilenceTimer() {
+function resetSilenceTimer() {
     if (silenceTimer) clearTimeout(silenceTimer);
     silenceTimer = setTimeout(() => {
       shouldListen = false;
-      try { if (activeRecog) activeRecog.stop(); } catch (_) {}
-      hardStop();
+      const r = activeRecog;
+      activeRecog = null;
+      try { if (r) r.stop(); } catch (_) {}
+      // Delay hardStop slightly to let onend fire cleanly
+      setTimeout(hardStop, 200);
     }, SILENCE_MS);
   }
 
@@ -128,12 +131,13 @@ function initMic(micBtnId, inputId, listeningBarId) {
     if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
   }
 
-  function hardStop() {
+function hardStop() {
     shouldListen = false;
     isActive     = false;
     clearSilenceTimer();
-    micBtn.classList.remove('listening');
-    showBar(false);
+    // Force UI update regardless of state
+    try { micBtn.classList.remove('listening'); } catch (_) {}
+    try { showBar(false); } catch (_) {}
     activeRecog = null;
   }
 
@@ -353,7 +357,14 @@ function showError(message) {
 /* ── Mark read ── */
 function markRead() {
   const td = today();
-  if (state.markedDates.includes(td)) return;
+  if (!current) return;
+  if (state.markedDates.includes(td)) {
+    const btn = document.getElementById('mark-btn');
+    btn.textContent = 'Read today ✓';
+    btn.classList.add('done');
+    document.getElementById('r-done').style.display = 'inline';
+    return;
+  }
   state.markedDates.push(td);
 
   const yest = new Date();
