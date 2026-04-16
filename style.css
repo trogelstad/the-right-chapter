@@ -1,7 +1,6 @@
 /* ═══════════════════════════════════════════
-   The Right Chapter — style.css
-   Art direction: dawn reading room · private library
-   warm parchment · editorial serif · calm luxury
+   The Right Chapter — style.css v3
+   Sacred invitation · oracle voice · warm parchment
 ═══════════════════════════════════════════ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -49,10 +48,10 @@
     --card-deep: #2a2419;
     --inset:     #302a1f;
     --hover:     #3a3226;
-    --ink:   #f0e8da;
-    --ink-2: #b5a898;
-    --ink-3: #7a6e61;
-    --ink-4: #4e4438;
+    --ink:       #f0e8da;
+    --ink-2:     #b5a898;
+    --ink-3:     #7a6e61;
+    --ink-4:     #4e4438;
     --plum:      #8880d0;
     --plum-mid:  #a09ae0;
     --plum-soft: #c0bcea;
@@ -114,8 +113,8 @@ body {
 /* ── Header ── */
 .rr-head {
   text-align: center;
-  margin-bottom: 2.75rem;
-  padding-bottom: 2rem;
+  margin-bottom: 0;
+  padding-bottom: 1.5rem;
   position: relative;
 }
 
@@ -131,15 +130,6 @@ body {
     transparent 70%);
   pointer-events: none;
   z-index: 0;
-}
-
-.rr-head::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 50%;
-  transform: translateX(-50%);
-  width: 80px; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--plum-ring), transparent);
 }
 
 .rr-head h1 {
@@ -172,12 +162,63 @@ body {
   position: relative; z-index: 1;
 }
 
+/* ── Sacred Invitation ── */
+.invitation {
+  text-align: center;
+  padding: 2.5rem 1rem 2rem;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.invitation::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 80px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--plum-ring), transparent);
+}
+
+.invitation::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 80px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--plum-ring), transparent);
+}
+
+.invite-line {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.5;
+  margin-bottom: 6px;
+  font-style: italic;
+  text-shadow: 0 1px 3px rgba(45,30,10,0.08);
+}
+
+.invite-accent {
+  font-size: 18px;
+  color: var(--plum);
+  margin-bottom: 18px;
+}
+
+.invite-sub {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--ink-3);
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+}
+
 /* ── Stats ── */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 2.75rem;
+  margin-bottom: 2.25rem;
 }
 
 .stat {
@@ -255,14 +296,19 @@ body {
   color: var(--ink);
   margin-bottom: 1.25rem;
   line-height: 1.3;
-  text-shadow: 0 1px 2px rgba(45,30,10,0.08);
+}
+
+/* ── Textarea + Mic wrapper ── */
+.textarea-wrap {
+  position: relative;
+  margin-bottom: 10px;
 }
 
 .oracle-textarea {
   width: 100%;
   border: 1px solid var(--line-med);
   border-radius: var(--r-md);
-  padding: 14px 16px;
+  padding: 14px 52px 14px 16px;
   font-size: 15px;
   font-family: var(--sans);
   font-weight: 300;
@@ -273,7 +319,6 @@ body {
   line-height: 1.7;
   transition: border-color 0.16s, box-shadow 0.16s;
   box-shadow: inset 0 1px 4px rgba(45,30,10,0.06);
-  margin-bottom: 14px;
 }
 
 .oracle-textarea:focus {
@@ -288,13 +333,111 @@ body {
   font-style: italic;
 }
 
+/* ── Mic button ── */
+.mic-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--line-med);
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--sh-xs);
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  z-index: 2;
+}
+
+.mic-btn:hover {
+  background: var(--plum-tint);
+  color: var(--plum);
+  border-color: var(--plum-ring);
+  box-shadow: var(--sh-sm);
+}
+
+.mic-btn.listening {
+  background: #e8353520;
+  border-color: #e83535;
+  color: #e83535;
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+
+.mic-icon {
+  width: 18px;
+  height: 18px;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232,53,53,0.25); }
+  50%       { box-shadow: 0 0 0 6px rgba(232,53,53,0); }
+}
+
+/* ── Listening bar ── */
+.listening-bar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  background: rgba(232,53,53,0.06);
+  border: 1px solid rgba(232,53,53,0.18);
+  border-radius: var(--r-md);
+}
+
+.listening-bar.visible {
+  display: flex;
+}
+
+.listening-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.listening-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e83535;
+  animation: listen-pulse 1.2s ease-in-out infinite;
+}
+
+.listening-dot:nth-child(2) { animation-delay: 0.2s; }
+.listening-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes listen-pulse {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+  40%           { transform: scale(1.2); opacity: 1; }
+}
+
+.listening-text {
+  font-size: 12px;
+  font-style: italic;
+  color: #e83535;
+  letter-spacing: 0.05em;
+}
+
+/* ── Meta row ── */
 .oracle-meta-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
+}
+
+.time-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
 }
 
 .char-count {
@@ -304,15 +447,16 @@ body {
   transition: color 0.2s;
 }
 
-/* ── Pills (inline variant) ── */
+/* ── Pills ── */
 .pills-inline {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
+  margin-bottom: 18px;
 }
 
 .pill {
-  padding: 6px 16px;
+  padding: 7px 18px;
   border-radius: 999px;
   border: 1.5px solid var(--line-med);
   background: var(--card);
@@ -342,7 +486,7 @@ body {
   box-shadow: 0 2px 10px rgba(59,47,110,0.30);
 }
 
-/* ── Spin / Oracle button ── */
+/* ── Spin button ── */
 .spin-btn {
   display: block;
   width: 100%;
@@ -380,14 +524,8 @@ body {
               inset 0 1px 0 rgba(255,248,235,0.14);
 }
 
-.spin-btn:active:not(:disabled) {
-  transform: scale(0.985);
-}
-
-.spin-btn:disabled {
-  opacity: 0.7;
-  cursor: default;
-}
+.spin-btn:active:not(:disabled) { transform: scale(0.985); }
+.spin-btn:disabled { opacity: 0.7; cursor: default; }
 
 /* ── Loading dots ── */
 .oracle-loading {
@@ -398,9 +536,7 @@ body {
   padding: 1.5rem 0 0;
 }
 
-.oracle-loading.visible {
-  display: flex;
-}
+.oracle-loading.visible { display: flex; }
 
 .loading-dot {
   width: 7px;
@@ -418,7 +554,7 @@ body {
   40%           { transform: scale(1);   opacity: 1; }
 }
 
-/* ── Oracle Result Card ── */
+/* ── Result card ── */
 .result-card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -429,9 +565,6 @@ body {
   display: none;
   position: relative;
   overflow: hidden;
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .result-card::before {
@@ -449,18 +582,13 @@ body {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; height: 120px;
-  background: linear-gradient(180deg,
-    rgba(220,190,140,0.07) 0%,
-    transparent 100%);
+  background: linear-gradient(180deg, rgba(220,190,140,0.07) 0%, transparent 100%);
   pointer-events: none;
 }
 
 .result-card.visible {
-  display: block;
-}
-
-.result-card.visible {
   animation: cardReveal 0.5s ease forwards;
+  display: block;
 }
 
 @keyframes cardReveal {
@@ -499,14 +627,12 @@ body {
   margin-bottom: 20px;
 }
 
-/* ── Book block ── */
 .book-block {
   background: var(--card-deep);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   padding: 1.25rem 1.5rem;
   margin-bottom: 18px;
-  position: relative;
 }
 
 .book-title {
@@ -542,11 +668,10 @@ body {
   border: 1px solid transparent;
 }
 
-.b-time { background: var(--sage-tint);  color: var(--sage);  border-color: var(--sage-ring); }
-.b-done { background: var(--sage-tint);  color: var(--sage);  border-color: var(--sage-ring);
+.b-time { background: var(--sage-tint); color: var(--sage); border-color: var(--sage-ring); }
+.b-done { background: var(--sage-tint); color: var(--sage); border-color: var(--sage-ring);
           font-weight: 600; display: none; }
 
-/* ── Page box ── */
 .page-box {
   background: var(--card-deep);
   border-radius: var(--r-lg);
@@ -565,9 +690,7 @@ body {
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   width: 200px; height: 120px;
-  background: radial-gradient(ellipse,
-    rgba(180,155,100,0.14) 0%,
-    transparent 70%);
+  background: radial-gradient(ellipse, rgba(180,155,100,0.14) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -592,7 +715,6 @@ body {
   position: relative; z-index: 1;
 }
 
-/* ── Oracle why / step ── */
 .oracle-why {
   font-size: 14px;
   color: var(--ink-2);
@@ -627,7 +749,6 @@ body {
   line-height: 1.6;
 }
 
-/* ── Buttons ── */
 .btn-row {
   display: flex;
   gap: 8px;
@@ -667,7 +788,6 @@ body {
 .mark-btn:hover {
   background: var(--sage-ring);
   color: #fff;
-  border-color: var(--sage-ring);
 }
 
 .mark-btn.done {
@@ -710,7 +830,7 @@ body {
   white-space: nowrap;
 }
 
-/* ── Reflection + Log cards ── */
+/* ── Reflection + Log ── */
 .reflect-card,
 .log-card {
   background: var(--card);
@@ -865,6 +985,8 @@ textarea::placeholder { color: var(--ink-4); }
 @media (max-width: 540px) {
   .rr { padding: 2.5rem 1.1rem 5rem; }
   .rr-head h1 { font-size: 30px; }
+  .invite-line { font-size: 18px; }
+  .invite-accent { font-size: 15px; }
   .stat-n { font-size: 28px; }
   .page-num { font-size: 44px; }
   .spin-btn { font-size: 16px; padding: 16px 20px; }
