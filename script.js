@@ -70,127 +70,151 @@ function initMic() {
     return;
   }
 
-  recognition = new SpeechRecognition();
-  recognition.continuous = true;      // keep listening through pauses
-  recognition.interimResults = true;
-  recognition.lang = 'en-US';
-  recognition.maxAlternatives = 1;
-
   let silenceTimer = null;
-const SILENCE_TIMEOUT = 4500; // 4.5 seconds of silence before auto-stop
+  let fullTranscript = '';
+  let shouldBeListening = false;
+  const SILENCE_TIMEOUT = 9000;
 
-  function resetSilenceTimer() {
-    if (silenceTimer) clearTimeout(silenceTimer);
-    silenceTimer = setTimeout(() => {
-      if (isListening && recognition) {
-        recognition.stop();
+  function buildRecognition() {
+    const r = new SpeechRecognition();
+    r.continuous = false;
+    r.interimResults = true;
+    r.lang = 'en-US';
+    r.maxAlternatives = 1;
+
+    r.onstart = () => {
+      if (!isListening) {
+        isListening = true;
+        micBtn.classList.add('listening');
+        showListening(true);
       }
-    }, SILENCE_TIMEOUT);
+      resetSilenceTimer();
+    };
+
+    r.onresult = (e) => {
+      resetSilenceTimer();
+
+      let interim = '';
+      let final = '';
+
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          final += e.results[i][0].transcript;
+        } else {
+          interim += e.results[i][0].transcript;
+        }
+      }
+
+      if (final) {
+        fullTranscript += (fullTranscript ? ' ' : '') + final.trim();
+      }
+
+      const display = fullTranscript + (interim ? ' ' + interim : '');
+      updateInput(display);
+    };
+
+    r.onerror = (e) => {
+      if (e.error === 'not-allowed') {
+        hardStop();
+        alert('Microphone access was denied. Please allow microphone access in your browser settings.');
+      } else if (e.error === 'no-speech') {
+        // ignore — silence timer will handle it
+      }
+    };
+
+    r.onend = () => {
+      // If we should still be listening, restart immediately
+      if (shouldBeListening) {
+        try {
+          recognition = buildRecognition();
+          recognition.start();
+        } catch(err) {
+          // small delay if start fails
+          setTimeout(() => {
+            if (shouldBeListening) {
+              try {
+                recognition = buildRecognition();
+                recognition.start();
+              } catch(e) {
+                hardStop();
+              }
+            }
+          }, 150);
+        }
+      } else {
+        hardStop();
+      }
+    };
+
+    return r;
   }
 
-  function clearSilenceTimer() {
-    if (silenceTimer) {
-      clearTimeout(silenceTimer);
-      silenceTimer = null;
-    }
-  }
-
-  recognition.onstart = () => {
-    isListening = true;
-    micBtn.classList.add('listening');
-    showListening(true);
-    resetSilenceTimer(); // start the silence countdown
-  };
-
-  recognition.onresult = (e) => {
+  function updateInput(text) {
     const input = document.getElementById('oracle-input');
     const counter = document.getElementById('char-count');
-
-    // Reset silence timer every time we hear something
-    resetSilenceTimer();
-
-    let finalTranscript = '';
-    let interimTranscript = '';
-
-    for (let i = 0; i < e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        finalTranscript += e.results[i][0].transcript;
-      } else {
-        interimTranscript += e.results[i][0].transcript;
-      }
-    }
-
-    const transcript = finalTranscript || interimTranscript;
-
-    if (input && transcript) {
-      input.value = transcript;
+    if (input && text) {
+      input.value = text;
       if (counter) {
-        const remaining = 500 - transcript.length;
+        const remaining = 500 - text.length;
         counter.textContent = remaining;
         counter.style.color = remaining < 50 ? 'var(--brass)' : 'var(--ink-4)';
       }
     }
-  };
+  }
 
-  recognition.onerror = (e) => {
-    console.error('Speech error:', e.error);
-    clearSilenceTimer();
-    if (e.error === 'not-allowed') {
-      showListening(false);
-      micBtn.classList.remove('listening');
-      isListening = false;
-      alert('Microphone access was denied. Please allow microphone access in your browser settings and try again.');
-    } else if (e.error === 'no-speech') {
-      stopListening();
-    } else {
-      stopListening();
-    }
-  };
+  function resetSilenceTimer() {
+    if (silenceTimer) clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(() => {
+      shouldBeListening = false;
+      if (recognition) recognition.stop();
+    }, SILENCE_TIMEOUT);
+  }
 
-recognition.onend = () => {
-    // On mobile, continuous mode still fires onend after each phrase
-    // If we're still within our silence window, restart automatically
-    if (isListening) {
-      try {
-        recognition.start();
-      } catch (err) {
-        clearSilenceTimer();
-        stopListening();
-      }
-    } else {
-      clearSilenceTimer();
-      stopListening();
-    }
-  };
+  function hardStop() {
+    shouldBeListening = false;
+    isListening = false;
+    if (silenceTimer) clearTimeout(silenceTimer);
+    silenceTimer = null;
+    micBtn.classList.remove('listening');
+    showListening(false);
+  }
 
   micBtn.addEventListener('click', () => {
-    if (isListening) {
-      clearSilenceTimer();
-      recognition.stop();
+    if (isListening || shouldBeListening) {
+      shouldBeListening = false;
+      if (recognition) recognition.stop();
+      hardStop();
     } else {
+      fullTranscript = '';
+      shouldBeListening = true;
+
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia({ audio: true })
           .then(() => {
             try {
+              recognition = buildRecognition();
               recognition.start();
             } catch (err) {
               console.error('Recognition start error:', err);
-              stopListening();
+              hardStop();
             }
           })
-          .catch((err) => {
-            console.error('Mic permission denied:', err);
+          .catch(() => {
+            shouldBeListening = false;
             alert('Please allow microphone access to use voice input.');
           });
       } else {
         try {
+          recognition = buildRecognition();
           recognition.start();
         } catch (err) {
-          console.error('Recognition start error:', err);
+          hardStop();
         }
       }
     }
   });
+
+  recognition = buildRecognition();
 }
 function stopListening() {
   isListening = false;
