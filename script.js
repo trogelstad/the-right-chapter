@@ -77,7 +77,7 @@ function initMic() {
   recognition.maxAlternatives = 1;
 
   let silenceTimer = null;
-const SILENCE_TIMEOUT = 9000; // 9 seconds of silence before auto-stop
+const SILENCE_TIMEOUT = 4500; // 4.5 seconds of silence before auto-stop
 
   function resetSilenceTimer() {
     if (silenceTimer) clearTimeout(silenceTimer);
@@ -147,9 +147,20 @@ const SILENCE_TIMEOUT = 9000; // 9 seconds of silence before auto-stop
     }
   };
 
-  recognition.onend = () => {
-    clearSilenceTimer();
-    stopListening();
+recognition.onend = () => {
+    // On mobile, continuous mode still fires onend after each phrase
+    // If we're still within our silence window, restart automatically
+    if (isListening) {
+      try {
+        recognition.start();
+      } catch (err) {
+        clearSilenceTimer();
+        stopListening();
+      }
+    } else {
+      clearSilenceTimer();
+      stopListening();
+    }
   };
 
   micBtn.addEventListener('click', () => {
