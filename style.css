@@ -1586,7 +1586,7 @@ textarea::placeholder { color: var(--ink-4); }
   .shelf-item {
     gap: 6px;
   }
-   /* Oracle speaks card — sits above the book reveal */
+/* Oracle speaks card — above the book reveal */
 .oracle-speaks-card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -1594,5 +1594,43 @@ textarea::placeholder { color: var(--ink-4); }
   padding: 1.75rem;
   margin-bottom: 1.25rem;
   box-shadow: var(--sh-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.oracle-speaks-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: rgba(255,248,235,0.80);
+  pointer-events: none;
+}
+
+.oracle-speaks-card .oracle-label {
+  margin-bottom: 1rem;
+}
+
+/* Pull quote — first 2 sentences, large serif */
+.oracle-pull {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.55;
+  margin-bottom: 1rem;
+  letter-spacing: -0.01em;
+}
+
+/* Body — remaining sentences, smaller with left border */
+.oracle-body {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-style: normal;
+  color: var(--ink-2);
+  line-height: 1.75;
+  border-left: 2px solid var(--plum-ring);
+  padding-left: 1rem;
+  margin: 0;
 }
 }
