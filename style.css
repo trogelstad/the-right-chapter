@@ -1586,4 +1586,13 @@ textarea::placeholder { color: var(--ink-4); }
   .shelf-item {
     gap: 6px;
   }
+   /* Oracle speaks card — sits above the book reveal */
+.oracle-speaks-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 1.75rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--sh-sm);
+}
 }
