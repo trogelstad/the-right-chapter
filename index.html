@@ -18,12 +18,9 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
 <main class="rr" role="main">
 
-  <!-- ══════════════════════════════════════
-       SCREEN: LANDING
-  ══════════════════════════════════════ -->
+  <!-- LANDING -->
   <div class="screen" id="screen-landing">
     <header class="rr-head">
       <h1>The Right Chapter</h1>
@@ -37,10 +34,7 @@
     </div>
   </div>
 
-
-  <!-- ══════════════════════════════════════
-       SCREEN: SHELF SETUP
-  ══════════════════════════════════════ -->
+  <!-- SHELF SETUP -->
   <div class="screen" id="screen-shelf-setup" style="display:none">
     <header class="rr-head">
       <h1>The Right Chapter</h1>
@@ -57,10 +51,7 @@
     <p class="landing-micro">You can edit your shelf anytime</p>
   </div>
 
-
-  <!-- ══════════════════════════════════════
-       SCREEN: SHELF CONFIRMATION
-  ══════════════════════════════════════ -->
+  <!-- SHELF CONFIRMATION -->
   <div class="screen" id="screen-shelf-confirm" style="display:none">
     <header class="rr-head">
       <h1>The Right Chapter</h1>
@@ -75,10 +66,7 @@
     </div>
   </div>
 
-
-  <!-- ══════════════════════════════════════
-       SCREEN: ORACLE INTAKE
-  ══════════════════════════════════════ -->
+  <!-- ORACLE INTAKE -->
   <div class="screen" id="screen-oracle" style="display:none">
     <header class="rr-head">
       <h1>The Right Chapter</h1>
@@ -117,10 +105,7 @@
     </div>
   </div>
 
-
-  <!-- ══════════════════════════════════════
-       SCREEN: LOADING
-  ══════════════════════════════════════ -->
+  <!-- LOADING -->
   <div class="screen" id="screen-loading" style="display:none">
     <header class="rr-head">
       <h1>The Right Chapter</h1>
@@ -132,42 +117,35 @@
     </div>
   </div>
 
-
-  <!-- ══════════════════════════════════════
-       SCREEN: REVEAL CARD
-  ══════════════════════════════════════ -->
+  <!-- REVEAL -->
   <div class="screen" id="screen-reveal" style="display:none">
     <header class="rr-head">
       <h1>The Right Chapter</h1>
       <p>The oracle speaks</p>
     </header>
 
-    <!-- ORACLE MESSAGE — comes first, before the book -->
+    <!-- ORACLE MESSAGE — full width card above the book -->
     <section class="oracle-speaks-card" aria-live="polite">
       <div class="oracle-label">✦ &nbsp;The oracle speaks</div>
       <div class="oracle-message" id="rev-oracle-msg"></div>
     </section>
 
-    <!-- BOOK REVEAL CARD -->
+    <!-- BOOK REVEAL -->
     <section class="result-card visible" id="reveal-card">
-
       <div class="book-title" id="rev-title"></div>
       <div class="book-author" id="rev-author"></div>
 
-      <div class="badges" id="rev-badges">
+      <div class="badges">
         <span class="badge b-format" id="rev-format-badge"></span>
         <span class="badge b-done" id="rev-done" style="display:none">Marked read today ✓</span>
       </div>
 
-      <!-- Page box -->
       <div class="page-box">
         <div class="page-num" id="rev-page"></div>
         <div class="page-sub" id="rev-page-sub"></div>
-        <!-- Summary below page reference -->
         <div class="page-note" id="rev-summary"></div>
       </div>
 
-      <!-- Audible link -->
       <a class="audible-link" id="rev-audible" href="#" target="_blank" rel="noopener" style="display:none">
         Listen on Audible →
       </a>
@@ -175,10 +153,8 @@
       <div class="btn-row">
         <button type="button" class="rr-btn mark-btn" id="rev-mark-btn">Mark read today</button>
       </div>
-
     </section>
 
-    <!-- Reflection -->
     <div class="divider" aria-hidden="true"><span>reflection</span></div>
 
     <section class="reflect-card" aria-label="Reflection">
@@ -196,13 +172,9 @@
       <button type="button" class="rr-btn" id="ask-again-btn">Ask the oracle again</button>
       <button type="button" class="rr-btn" id="reveal-edit-shelf-btn">Edit my shelf</button>
     </div>
-
   </div>
 
-
-  <!-- ══════════════════════════════════════
-       SCREEN: EDIT SHELF
-  ══════════════════════════════════════ -->
+  <!-- EDIT SHELF -->
   <div class="screen" id="screen-edit-shelf" style="display:none">
     <header class="rr-head">
       <h1>The Right Chapter</h1>
