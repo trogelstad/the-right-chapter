@@ -1525,4 +1525,12 @@ textarea::placeholder { color: var(--ink-4); }
   .shelf-item { gap: 6px; }
   .oracle-pull { font-size: 17px; }
 }
-
+/* Journal reflection prompt */
+.journal-prompt {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--plum);
+  font-style: italic;
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
