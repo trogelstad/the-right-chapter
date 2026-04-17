@@ -359,8 +359,17 @@ function stopLoadingMessages() {
 ═══════════════════════════════════════════ */
 function renderReveal(data) {
 
-  /* Oracle message — shown in its own card above the book */
-  document.getElementById('rev-oracle-msg').textContent = data.oracleMessage || '';
+/* Oracle message — split into pull quote + body for visual hierarchy */
+  const fullMsg = data.oracleMessage || '';
+  const sentences = fullMsg.match(/[^.!?]+[.!?]+/g) || [fullMsg];
+  const pullQuote = sentences.slice(0, 2).join(' ').trim();
+  const bodyText  = sentences.slice(2).join(' ').trim();
+
+  const msgEl = document.getElementById('rev-oracle-msg');
+  msgEl.innerHTML = `
+    <p class="oracle-pull">${escHtml(pullQuote)}</p>
+    ${bodyText ? `<p class="oracle-body">${escHtml(bodyText)}</p>` : ''}
+  `;
 
   /* Book */
   document.getElementById('rev-title').textContent  = data.title  || '';
