@@ -6,6 +6,7 @@ const STATE_KEY   = 'trc_state';
 let library          = null;
 let appState         = null;
 let editReturnScreen = 'screen-oracle';
+let currentReveal    = null;
 
 /* ── Screen router ── */
 function showScreen(id) {
@@ -77,9 +78,16 @@ function wireButtons() {
   document.getElementById('rev-mark-btn').addEventListener('click', markRead);
   document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
 
-  document.getElementById('ask-again-btn').addEventListener('click', () => {
+document.getElementById('ask-again-btn').addEventListener('click', () => {
     document.getElementById('oracle-input').value = '';
     document.getElementById('char-count').textContent = '';
+
+    /* Reset mark read button for new session */
+    const markBtn = document.getElementById('rev-mark-btn');
+    const doneEl  = document.getElementById('rev-done');
+    if (markBtn) { markBtn.textContent = 'Mark read today'; markBtn.classList.remove('done'); }
+    if (doneEl)  { doneEl.style.display = 'none'; }
+
     updateOracleShelfLabel();
     renderStats();
     showStats(true);
@@ -329,7 +337,7 @@ function renderReveal(data) {
   const sentences = fullMsg.match(/[^.!?]+[.!?]+/g) || [fullMsg];
   const pullQuote = sentences.slice(0, 2).join(' ').trim();
   const bodyText  = sentences.slice(2).join(' ').trim();
-
+  currentReveal = data;
   const msgEl = document.getElementById('rev-oracle-msg');
   msgEl.innerHTML = `
     <p class="oracle-pull">${escHtml(pullQuote)}</p>
@@ -421,8 +429,20 @@ function markRead() {
 function saveReflect() {
   const val = document.getElementById('r-text').value.trim();
   if (!val) return;
-  appState.reflections[today()] = val;
+
+  const key   = String(Date.now());
+  const entry = {
+    date:    today(),
+    text:    val,
+    title:   currentReveal ? currentReveal.title   : '',
+    pageRef: currentReveal ? currentReveal.pageRef : ''
+  };
+
+  if (!appState.reflections) appState.reflections = {};
+  appState.reflections[key] = entry;
+
   saveState();
+  document.getElementById('r-text').value = '';
   const ok = document.getElementById('saved-ok');
   ok.style.display = 'inline';
   setTimeout(() => { ok.style.display = 'none'; }, 2200);
@@ -433,28 +453,41 @@ function renderJournal() {
   const el = document.getElementById('journal-list');
   if (!el) return;
 
-  const entries = Object.entries(appState.reflections || {})
-    .sort((a, b) => b[0].localeCompare(a[0])); // newest first
+  const raw = appState.reflections || {};
+
+  /* Support both old format (date string → text) and new format (timestamp → object) */
+  const entries = Object.entries(raw)
+    .map(([key, val]) => {
+      if (typeof val === 'string') {
+        return { key, date: key, text: val, title: '', pageRef: '' };
+      }
+      return { key, date: val.date || key, text: val.text, title: val.title || '', pageRef: val.pageRef || '' };
+    })
+    .sort((a, b) => b.key.localeCompare(a.key)); // newest first
 
   if (entries.length === 0) {
     el.innerHTML = '<p class="log-empty">No reflections yet. Save one above after your session.</p>';
     return;
   }
 
-  el.innerHTML = entries.map(([date, text], i) => {
-    const label = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {
+  el.innerHTML = entries.map(entry => {
+    const label = new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', {
       month: 'long', day: 'numeric', year: 'numeric'
     });
+    const bookLine = entry.title
+      ? `<span class="accordion-book">${escHtml(entry.title)}${entry.pageRef ? ' · ' + escHtml(entry.pageRef) : ''}</span>`
+      : '';
     return `
       <div class="accordion-entry">
         <button type="button" class="accordion-header" aria-expanded="false" onclick="toggleAccordion(this)">
           <div class="accordion-meta">
             <span class="accordion-date">${label}</span>
+            ${bookLine}
           </div>
           <span class="accordion-chevron">›</span>
         </button>
         <div class="accordion-body" hidden>
-          <p class="reflection-text">${escHtml(text)}</p>
+          <p class="reflection-text">${escHtml(entry.text)}</p>
         </div>
       </div>
     `;
