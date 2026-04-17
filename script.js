@@ -393,7 +393,7 @@ function renderReveal(data) {
 
   document.getElementById('r-text').value           = '';
   document.getElementById('saved-ok').style.display = 'none';
-
+  renderJournal();
   showScreen('screen-reveal');
 }
 
@@ -426,6 +426,47 @@ function saveReflect() {
   const ok = document.getElementById('saved-ok');
   ok.style.display = 'inline';
   setTimeout(() => { ok.style.display = 'none'; }, 2200);
+  renderJournal();
+}
+
+function renderJournal() {
+  const el = document.getElementById('journal-list');
+  if (!el) return;
+
+  const entries = Object.entries(appState.reflections || {})
+    .sort((a, b) => b[0].localeCompare(a[0])); // newest first
+
+  if (entries.length === 0) {
+    el.innerHTML = '<p class="log-empty">No reflections yet. Save one above after your session.</p>';
+    return;
+  }
+
+  el.innerHTML = entries.map(([date, text], i) => {
+    const label = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric'
+    });
+    return `
+      <div class="accordion-entry">
+        <button type="button" class="accordion-header" aria-expanded="false" onclick="toggleAccordion(this)">
+          <div class="accordion-meta">
+            <span class="accordion-date">${label}</span>
+          </div>
+          <span class="accordion-chevron">›</span>
+        </button>
+        <div class="accordion-body" hidden>
+          <p class="reflection-text">${escHtml(text)}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleAccordion(btn) {
+  const body     = btn.nextElementSibling;
+  const isOpen   = !body.hidden;
+  body.hidden    = isOpen;
+  btn.setAttribute('aria-expanded', String(!isOpen));
+  btn.classList.toggle('open', !isOpen);
 }
 
 /* ── Session log ── */
