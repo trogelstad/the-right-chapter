@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════
    The Right Chapter — script.js
-   Version 2.0 · Full build with Sample Shelf Mode
+   Version 2.0 · Full build + Sample Shelf Mode
 ═══════════════════════════════════════════ */
 'use strict';
 
@@ -11,31 +11,30 @@ const STATE_KEY   = 'trc_state';
 /* ══════════════════════════════════════════
    SAMPLE SHELF — curated starter library
    Built from the founding 18-book collection.
-   Swap or expand this array anytime; the oracle
-   uses it exactly like a personal shelf.
+   Swap or expand this array anytime.
 ══════════════════════════════════════════ */
 const SAMPLE_SHELF = {
   version: 2,
   isSample: true,
   books: [
-    { id: 'sample-1',  title: 'Daily Reflections',                author: 'Alcoholics Anonymous', format: 'print', pages: 400,  addedAt: '2024-01-01' },
-    { id: 'sample-2',  title: 'The Four Agreements',              author: 'Don Miguel Ruiz',       format: 'print', pages: 160,  addedAt: '2024-01-01' },
-    { id: 'sample-3',  title: 'The Alchemist',                    author: 'Paulo Coelho',          format: 'print', pages: 208,  addedAt: '2024-01-01' },
-    { id: 'sample-4',  title: 'Alcoholics Anonymous',             author: 'Alcoholics Anonymous', format: 'print', pages: 575,  addedAt: '2024-01-01' },
-    { id: 'sample-5',  title: 'Becoming Supernatural',            author: 'Dr. Joe Dispenza',      format: 'print', pages: 380,  addedAt: '2024-01-01' },
-    { id: 'sample-6',  title: 'Alcohol Explained',                author: 'William Porter',        format: 'print', pages: 200,  addedAt: '2024-01-01' },
-    { id: 'sample-7',  title: 'This Naked Mind',                  author: 'Annie Grace',           format: 'print', pages: 260,  addedAt: '2024-01-01' },
-    { id: 'sample-8',  title: 'Quit Drinking Without Willpower',  author: 'Allen Carr',            format: 'print', pages: 288,  addedAt: '2024-01-01' },
-    { id: 'sample-9',  title: 'Quantum Success',                  author: 'Sandra Anne Taylor',    format: 'print', pages: 256,  addedAt: '2024-01-01' },
-    { id: 'sample-10', title: 'Twelve Steps and Twelve Traditions', author: 'Alcoholics Anonymous', format: 'print', pages: 192, addedAt: '2024-01-01' },
-    { id: 'sample-11', title: 'The Road Less Traveled',           author: 'M. Scott Peck',         format: 'print', pages: 316,  addedAt: '2024-01-01' },
-    { id: 'sample-12', title: 'Alcohol Explained 2',              author: 'William Porter',        format: 'print', pages: 200,  addedAt: '2024-01-01' },
-    { id: 'sample-13', title: 'Living Sober',                     author: 'Alcoholics Anonymous', format: 'print', pages: 120,  addedAt: '2024-01-01' },
-    { id: 'sample-14', title: 'The Automatic Millionaire',        author: 'David Bach',            format: 'print', pages: 240,  addedAt: '2024-01-01' },
-    { id: 'sample-15', title: 'The Energy of Money',              author: 'Maria Nemeth, Ph.D.',   format: 'print', pages: 304,  addedAt: '2024-01-01' },
-    { id: 'sample-16', title: 'The Red Road to Wellbriety',       author: 'White Bison, Inc.',     format: 'print', pages: 200,  addedAt: '2024-01-01' },
-    { id: 'sample-17', title: 'The Holy Bible',                   author: 'Various',               format: 'print', pages: 1200, addedAt: '2024-01-01' },
-    { id: 'sample-18', title: 'Atomic Habits',                    author: 'James Clear',           format: 'print', pages: 320,  addedAt: '2024-01-01' },
+    { id: 'sample-1',  title: 'Daily Reflections',                author: 'Alcoholics Anonymous',  format: 'print', pages: 400,  addedAt: '2024-01-01' },
+    { id: 'sample-2',  title: 'The Four Agreements',              author: 'Don Miguel Ruiz',        format: 'print', pages: 160,  addedAt: '2024-01-01' },
+    { id: 'sample-3',  title: 'The Alchemist',                    author: 'Paulo Coelho',           format: 'print', pages: 208,  addedAt: '2024-01-01' },
+    { id: 'sample-4',  title: 'Alcoholics Anonymous',             author: 'Alcoholics Anonymous',  format: 'print', pages: 575,  addedAt: '2024-01-01' },
+    { id: 'sample-5',  title: 'Becoming Supernatural',            author: 'Dr. Joe Dispenza',       format: 'print', pages: 380,  addedAt: '2024-01-01' },
+    { id: 'sample-6',  title: 'Alcohol Explained',                author: 'William Porter',         format: 'print', pages: 200,  addedAt: '2024-01-01' },
+    { id: 'sample-7',  title: 'This Naked Mind',                  author: 'Annie Grace',            format: 'print', pages: 260,  addedAt: '2024-01-01' },
+    { id: 'sample-8',  title: 'Quit Drinking Without Willpower',  author: 'Allen Carr',             format: 'print', pages: 288,  addedAt: '2024-01-01' },
+    { id: 'sample-9',  title: 'Quantum Success',                  author: 'Sandra Anne Taylor',     format: 'print', pages: 256,  addedAt: '2024-01-01' },
+    { id: 'sample-10', title: 'Twelve Steps and Twelve Traditions', author: 'Alcoholics Anonymous', format: 'print', pages: 192,  addedAt: '2024-01-01' },
+    { id: 'sample-11', title: 'The Road Less Traveled',           author: 'M. Scott Peck',          format: 'print', pages: 316,  addedAt: '2024-01-01' },
+    { id: 'sample-12', title: 'Alcohol Explained 2',              author: 'William Porter',         format: 'print', pages: 200,  addedAt: '2024-01-01' },
+    { id: 'sample-13', title: 'Living Sober',                     author: 'Alcoholics Anonymous',  format: 'print', pages: 120,  addedAt: '2024-01-01' },
+    { id: 'sample-14', title: 'The Automatic Millionaire',        author: 'David Bach',             format: 'print', pages: 240,  addedAt: '2024-01-01' },
+    { id: 'sample-15', title: 'The Energy of Money',              author: 'Maria Nemeth, Ph.D.',    format: 'print', pages: 304,  addedAt: '2024-01-01' },
+    { id: 'sample-16', title: 'The Red Road to Wellbriety',       author: 'White Bison, Inc.',      format: 'print', pages: 200,  addedAt: '2024-01-01' },
+    { id: 'sample-17', title: 'The Holy Bible',                   author: 'Various',                format: 'print', pages: 1200, addedAt: '2024-01-01' },
+    { id: 'sample-18', title: 'Atomic Habits',                    author: 'James Clear',            format: 'print', pages: 320,  addedAt: '2024-01-01' },
   ]
 };
 
@@ -46,10 +45,8 @@ let editReturnScreen = 'screen-oracle';
 let lastOracleResult = null;
 
 /*
- * isSampleMode — true when the user chose "Try it with a sample shelf"
- * on the landing screen. Resets to false on page reload.
- * Nothing is written to localStorage while this is true.
- * Set back to false when the user explicitly builds their own shelf.
+ * isSampleMode — true when user chose "Try it with a sample shelf".
+ * Resets to false on page reload. Nothing written to localStorage while true.
  */
 let isSampleMode = false;
 
@@ -59,14 +56,11 @@ let isSampleMode = false;
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
   const target = document.getElementById(id);
-  if (target) {
-    target.style.display = 'block';
-    window.scrollTo(0, 0);
-  }
+  if (target) { target.style.display = 'block'; window.scrollTo(0, 0); }
 }
 
 /* ═══════════════════════════════════════════
-   INIT — runs on page load
+   INIT
 ═══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   library  = loadLibrary();
@@ -74,17 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
   wireButtons();
 
   if (library && library.books && library.books.length >= 3) {
-    /* Returning user with a full shelf — go straight to oracle */
     updateOracleShelfLabel();
     renderStats();
     showStats(true);
     showScreen('screen-oracle');
   } else if (library && library.books && library.books.length > 0) {
-    /* Partial shelf — resume setup */
     initShelfSetup(library.books);
     showScreen('screen-shelf-setup');
   } else {
-    /* Brand new user — show landing */
     showScreen('screen-landing');
   }
 });
@@ -94,16 +85,16 @@ document.addEventListener('DOMContentLoaded', () => {
 ═══════════════════════════════════════════ */
 function wireButtons() {
 
-  /* ── LANDING ── */
+  /* LANDING */
   document.getElementById('landing-cta').addEventListener('click', () => {
     initShelfSetup([]);
     showScreen('screen-shelf-setup');
   });
 
-  /* ── SAMPLE SHELF CTA (new) ── */
+  /* SAMPLE SHELF CTA */
   document.getElementById('sample-shelf-cta').addEventListener('click', enterSampleMode);
 
-  /* ── SHELF SETUP ── */
+  /* SHELF SETUP */
   document.getElementById('add-book-btn').addEventListener('click', () => {
     addBookRow('book-rows', onShelfRowChange);
   });
@@ -116,7 +107,7 @@ function wireButtons() {
     showScreen('screen-shelf-confirm');
   });
 
-  /* ── SHELF CONFIRM ── */
+  /* SHELF CONFIRM */
   document.getElementById('confirm-oracle-btn').addEventListener('click', () => {
     updateOracleShelfLabel();
     showStats(false);
@@ -129,9 +120,8 @@ function wireButtons() {
     showScreen('screen-edit-shelf');
   });
 
-  /* ── ORACLE INTAKE ── */
+  /* ORACLE INTAKE */
   document.getElementById('oracle-input').addEventListener('input', onOracleInputChange);
-
   document.getElementById('oracle-submit-btn').addEventListener('click', submitToOracle);
 
   document.getElementById('oracle-edit-shelf-btn').addEventListener('click', () => {
@@ -140,26 +130,22 @@ function wireButtons() {
     showScreen('screen-edit-shelf');
   });
 
-  /* ── REVEAL CARD ── */
+  /* REVEAL CARD */
   document.getElementById('rev-mark-btn').addEventListener('click', markRead);
   document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
 
   document.getElementById('ask-again-btn').addEventListener('click', () => {
-    document.getElementById('oracle-input').value   = '';
+    document.getElementById('oracle-input').value    = '';
     document.getElementById('char-count').textContent = '';
     updateOracleShelfLabel();
-    if (!isSampleMode) {
-      renderStats();
-      showStats(true);
-    }
+    if (!isSampleMode) { renderStats(); showStats(true); }
     showScreen('screen-oracle');
   });
 
   /*
-   * "Edit my shelf" on the reveal screen behaves differently in sample mode:
-   * — sample mode  → exits sample mode and starts shelf setup
-   * — normal mode  → opens the edit shelf screen
-   * The button text is updated by renderReveal() each time.
+   * "Edit my shelf" on the reveal screen:
+   * — sample mode → exits sample mode, goes to shelf setup
+   * — normal mode → opens edit shelf screen
    */
   document.getElementById('reveal-edit-shelf-btn').addEventListener('click', () => {
     if (isSampleMode) {
@@ -171,10 +157,10 @@ function wireButtons() {
     }
   });
 
-  /* ── SAMPLE PROMPT — "Add your shelf →" button (new) ── */
+  /* SAMPLE PROMPT — "Add your shelf →" */
   document.getElementById('build-my-shelf-btn').addEventListener('click', exitSampleMode);
 
-  /* ── EDIT SHELF ── */
+  /* EDIT SHELF */
   document.getElementById('edit-add-book-btn').addEventListener('click', () => {
     addBookRow('edit-book-rows', onEditRowChange);
   });
@@ -194,27 +180,17 @@ function wireButtons() {
 }
 
 /* ═══════════════════════════════════════════
-   SAMPLE MODE — enter & exit
+   SAMPLE MODE
 ═══════════════════════════════════════════ */
-
-/**
- * enterSampleMode — called when user clicks "Try it with a sample shelf"
- * Sets isSampleMode = true, skips shelf setup entirely, goes to oracle.
- */
 function enterSampleMode() {
   isSampleMode = true;
   document.getElementById('oracle-input').value    = '';
   document.getElementById('char-count').textContent = '';
   updateOracleShelfLabel();
-  showStats(false); /* No stats banner during sample experience */
+  showStats(false);
   showScreen('screen-oracle');
 }
 
-/**
- * exitSampleMode — called when user clicks "Add your shelf →" or
- * "Edit my shelf" while in sample mode.
- * Clears isSampleMode, starts fresh shelf setup.
- */
 function exitSampleMode() {
   isSampleMode = false;
   initShelfSetup([]);
@@ -222,17 +198,12 @@ function exitSampleMode() {
 }
 
 /* ═══════════════════════════════════════════
-   ORACLE — the main event
+   ORACLE
 ═══════════════════════════════════════════ */
 async function submitToOracle() {
   const input = document.getElementById('oracle-input').value.trim();
   if (input.length < 5) return;
 
-  /*
-   * Choose the active book list:
-   *   sample mode → SAMPLE_SHELF.books
-   *   normal mode → the user's saved library
-   */
   const books = isSampleMode
     ? SAMPLE_SHELF.books
     : (loadLibrary()?.books || []);
@@ -242,7 +213,6 @@ async function submitToOracle() {
     return;
   }
 
-  /* Show loading */
   showScreen('screen-loading');
   startLoadingMessages();
 
@@ -265,10 +235,8 @@ async function submitToOracle() {
     const data = await response.json();
     lastOracleResult = data;
 
-    /* Don't pollute stats with sample-mode sessions */
-    if (!isSampleMode) {
-      logSession(data);
-    }
+    /* Don't log stats for sample sessions */
+    if (!isSampleMode) { logSession(data); }
 
     renderReveal(data);
 
@@ -305,22 +273,10 @@ function addBookRow(containerId, onChange, prefill = {}) {
 
   row.innerHTML = `
     <div class="book-row-fields">
-      <input
-        type="text"
-        class="book-title-input"
-        placeholder="Book title"
-        value="${escHtml(prefill.title || '')}"
-        aria-label="Book title"
-        autocomplete="off"
-      />
-      <input
-        type="text"
-        class="book-author-input"
-        placeholder="Author"
-        value="${escHtml(prefill.author || '')}"
-        aria-label="Author name"
-        autocomplete="off"
-      />
+      <input type="text" class="book-title-input" placeholder="Book title"
+        value="${escHtml(prefill.title || '')}" aria-label="Book title" autocomplete="off" />
+      <input type="text" class="book-author-input" placeholder="Author"
+        value="${escHtml(prefill.author || '')}" aria-label="Author name" autocomplete="off" />
     </div>
     <div class="book-row-meta">
       <div class="format-pills" role="group" aria-label="Format">
@@ -339,25 +295,15 @@ function addBookRow(containerId, onChange, prefill = {}) {
     });
   });
 
-  row.querySelector('.remove-book-btn').addEventListener('click', () => {
-    row.remove();
-    onChange();
-  });
-
-  row.querySelectorAll('input').forEach(inp => {
-    inp.addEventListener('input', onChange);
-  });
-
+  row.querySelector('.remove-book-btn').addEventListener('click', () => { row.remove(); onChange(); });
+  row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', onChange));
   container.appendChild(row);
   onChange();
-
-  if (!prefill.title) {
-    row.querySelector('.book-title-input').focus();
-  }
+  if (!prefill.title) row.querySelector('.book-title-input').focus();
 }
 
 function collectBooks(containerId) {
-  const rows = document.querySelectorAll(`#${containerId} .book-row`);
+  const rows  = document.querySelectorAll(`#${containerId} .book-row`);
   const books = [];
   rows.forEach(row => {
     const title  = row.querySelector('.book-title-input').value.trim();
@@ -365,36 +311,22 @@ function collectBooks(containerId) {
     const fmtBtn = row.querySelector('.fmt-pill.on');
     const format = fmtBtn ? fmtBtn.dataset.fmt : 'print';
     if (title && author) {
-      books.push({
-        id:      String(Date.now() + Math.random()),
-        title,
-        author,
-        format,
-        pages:   null,
-        addedAt: today()
-      });
+      books.push({ id: String(Date.now() + Math.random()), title, author, format, pages: null, addedAt: today() });
     }
   });
   return books;
 }
 
-function onShelfRowChange() {
-  updateShelfProgress('book-rows', 'shelf-progress', 'shelf-confirm-btn');
-}
-
-function onEditRowChange() {
-  updateShelfProgress('edit-book-rows', 'edit-shelf-progress', 'edit-save-btn');
-}
+function onShelfRowChange() { updateShelfProgress('book-rows', 'shelf-progress', 'shelf-confirm-btn'); }
+function onEditRowChange()  { updateShelfProgress('edit-book-rows', 'edit-shelf-progress', 'edit-save-btn'); }
 
 function updateShelfProgress(containerId, progressId, btnId) {
   const books     = collectBooks(containerId);
   const count     = books.length;
   const progressEl = document.getElementById(progressId);
   const btnEl     = document.getElementById(btnId);
-
   if (count === 0) {
-    progressEl.textContent = '';
-    progressEl.className   = 'shelf-progress';
+    progressEl.textContent = ''; progressEl.className = 'shelf-progress';
   } else if (count < 3) {
     progressEl.textContent = `${count} book${count > 1 ? 's' : ''} added · need at least 3`;
     progressEl.className   = 'shelf-progress warn';
@@ -402,7 +334,6 @@ function updateShelfProgress(containerId, progressId, btnId) {
     progressEl.textContent = `${count} book${count > 1 ? 's' : ''} on your shelf ✓`;
     progressEl.className   = 'shelf-progress ok';
   }
-
   if (btnEl) btnEl.disabled = count < 3;
 }
 
@@ -425,7 +356,7 @@ function initEditShelf() {
 }
 
 /* ═══════════════════════════════════════════
-   SHELF CONFIRMATION DISPLAY
+   SHELF DISPLAY
 ═══════════════════════════════════════════ */
 function renderShelfDisplay(books, containerId) {
   const el = document.getElementById(containerId);
@@ -447,39 +378,27 @@ function onOracleInputChange() {
   const btn     = document.getElementById('oracle-submit-btn');
   const counter = document.getElementById('char-count');
   const len     = input.value.length;
-
-  btn.disabled = len < 5;
-
-  if (len > 20) {
-    counter.textContent  = `${len} / 500`;
-    counter.style.display = 'block';
-  } else {
-    counter.style.display = 'none';
-  }
+  btn.disabled  = len < 5;
+  if (len > 20) { counter.textContent = `${len} / 500`; counter.style.display = 'block'; }
+  else { counter.style.display = 'none'; }
 }
 
-/**
- * updateOracleShelfLabel — updates the header subline and shelf button
- * on the oracle intake screen.
- * In sample mode: shows "Sample shelf · 18 books" and hides the edit button.
- * In normal mode: shows "Your shelf · N books" and shows the edit button.
- */
 function updateOracleShelfLabel() {
-  const countEl   = document.getElementById('oracle-shelf-count');
-  const labelEl   = document.getElementById('oracle-shelf-label');
-  const editBtn   = document.getElementById('oracle-edit-shelf-btn');
+  const countEl = document.getElementById('oracle-shelf-count');
+  const labelEl = document.getElementById('oracle-shelf-label');
+  const editBtn = document.getElementById('oracle-edit-shelf-btn');
 
   if (isSampleMode) {
     const count = SAMPLE_SHELF.books.length;
-    if (countEl)  countEl.textContent  = count;
-    if (labelEl)  labelEl.textContent  = `Sample shelf · ${count} books`;
-    if (editBtn)  editBtn.style.display = 'none'; /* Can't edit a sample shelf */
+    if (countEl) countEl.textContent  = count;
+    if (labelEl) labelEl.textContent  = `Sample shelf · ${count} books`;
+    if (editBtn) editBtn.style.display = 'none';
   } else {
     const lib   = loadLibrary();
     const count = (lib && lib.books) ? lib.books.length : 0;
-    if (countEl)  countEl.textContent  = count;
-    if (labelEl)  labelEl.textContent  = `Your shelf · ${count} book${count !== 1 ? 's' : ''}`;
-    if (editBtn)  editBtn.style.display = ''; /* Restore visibility */
+    if (countEl) countEl.textContent  = count;
+    if (labelEl) labelEl.textContent  = `Your shelf · ${count} book${count !== 1 ? 's' : ''}`;
+    if (editBtn) editBtn.style.display = '';
   }
 }
 
@@ -499,15 +418,11 @@ function startLoadingMessages() {
   loadingIndex = 0;
   const msgEl = document.getElementById('loading-msg');
   if (msgEl) msgEl.textContent = LOADING_MESSAGES[0];
-
   loadingTimer = setInterval(() => {
     loadingIndex = (loadingIndex + 1) % LOADING_MESSAGES.length;
     if (msgEl) {
       msgEl.style.opacity = '0';
-      setTimeout(() => {
-        msgEl.textContent   = LOADING_MESSAGES[loadingIndex];
-        msgEl.style.opacity = '1';
-      }, 300);
+      setTimeout(() => { msgEl.textContent = LOADING_MESSAGES[loadingIndex]; msgEl.style.opacity = '1'; }, 300);
     }
   }, 1800);
 }
@@ -520,29 +435,34 @@ function stopLoadingMessages() {
    REVEAL CARD
 ═══════════════════════════════════════════ */
 function renderReveal(data) {
-  document.getElementById('rev-title').textContent      = data.title      || '';
-  document.getElementById('rev-author').textContent     = data.author     || '';
+  /* Oracle message — goes into oracle-speaks-card */
   document.getElementById('rev-oracle-msg').textContent = data.oracleMessage || '';
 
+  /* Book */
+  document.getElementById('rev-title').textContent  = data.title  || '';
+  document.getElementById('rev-author').textContent = data.author || '';
+
+  /* Page reference — always rendered in full display style, no if/else */
   const pageEl    = document.getElementById('rev-page');
   const pageSubEl = document.getElementById('rev-page-sub');
+  pageEl.style.fontSize  = '';
+  pageEl.style.fontStyle = '';
+  pageEl.textContent     = data.pageRef || '';
+  pageSubEl.textContent  = 'open to this page and begin';
 
-  if (data.pageRefType === 'number') {
-    pageEl.style.fontSize  = '';
-    pageEl.style.fontStyle = '';
-    pageEl.textContent     = data.pageRef;
-    pageSubEl.textContent  = 'suggested starting page';
-  } else {
-    pageEl.style.fontSize  = '20px';
-    pageEl.style.fontStyle = 'italic';
-    pageEl.textContent     = data.pageRef;
-    pageSubEl.textContent  = 'open here and let the page find you';
+  /* Summary — one sentence below the page number */
+  const summaryEl = document.getElementById('rev-summary');
+  if (summaryEl) {
+    summaryEl.textContent  = data.summary || '';
+    summaryEl.style.display = data.summary ? 'block' : 'none';
   }
 
+  /* Format badge */
   const badgeEl = document.getElementById('rev-format-badge');
   badgeEl.textContent = formatLabel(data.format);
   badgeEl.className   = `badge b-format-${data.format || 'print'}`;
 
+  /* Audible link */
   const audibleEl = document.getElementById('rev-audible');
   if (data.format === 'audio') {
     const q = encodeURIComponent((data.title || '') + ' ' + (data.author || ''));
@@ -552,6 +472,7 @@ function renderReveal(data) {
     audibleEl.style.display = 'none';
   }
 
+  /* Mark read state */
   const markBtn = document.getElementById('rev-mark-btn');
   const doneEl  = document.getElementById('rev-done');
   if (appState.markedDates && appState.markedDates.includes(today())) {
@@ -564,23 +485,18 @@ function renderReveal(data) {
     doneEl.style.display = 'none';
   }
 
-  document.getElementById('r-text').value         = '';
+  document.getElementById('r-text').value          = '';
   document.getElementById('saved-ok').style.display = 'none';
 
-  /* ── Sample mode UI adjustments ── */
-  const samplePrompt  = document.getElementById('sample-shelf-prompt');
-  const editShelfBtn  = document.getElementById('reveal-edit-shelf-btn');
-
+  /* Sample mode UI */
+  const samplePrompt = document.getElementById('sample-shelf-prompt');
+  const editShelfBtn = document.getElementById('reveal-edit-shelf-btn');
   if (isSampleMode) {
-    /* Show the "make it yours" prompt */
-    if (samplePrompt)  samplePrompt.style.display = 'block';
-    /* Relabel "Edit my shelf" → "Build my shelf" */
-    if (editShelfBtn)  editShelfBtn.textContent = 'Build my shelf';
+    if (samplePrompt) samplePrompt.style.display = 'block';
+    if (editShelfBtn) editShelfBtn.textContent    = 'Build my shelf';
   } else {
-    /* Hide the sample prompt */
-    if (samplePrompt)  samplePrompt.style.display = 'none';
-    /* Restore original label */
-    if (editShelfBtn)  editShelfBtn.textContent = 'Edit my shelf';
+    if (samplePrompt) samplePrompt.style.display = 'none';
+    if (editShelfBtn) editShelfBtn.textContent    = 'Edit my shelf';
   }
 
   showScreen('screen-reveal');
@@ -593,21 +509,14 @@ function markRead() {
   const td = today();
   if (appState.markedDates.includes(td)) return;
   appState.markedDates.push(td);
-
   const yest = new Date();
   yest.setDate(yest.getDate() - 1);
   const yStr = yest.toISOString().split('T')[0];
-
-  if (appState.lastDate === yStr) {
-    appState.streak++;
-  } else if (appState.lastDate !== td) {
-    appState.streak = 1;
-  }
+  if (appState.lastDate === yStr) { appState.streak++; }
+  else if (appState.lastDate !== td) { appState.streak = 1; }
   appState.lastDate = td;
-
   saveState();
   renderStats();
-
   document.getElementById('rev-mark-btn').textContent = 'Read today ✓';
   document.getElementById('rev-mark-btn').classList.add('done');
   document.getElementById('rev-done').style.display   = 'inline';
@@ -627,7 +536,9 @@ function saveReflect() {
 }
 
 /* ═══════════════════════════════════════════
-   SESSION LOG (personal sessions only)
+   SESSION LOG — streak fixed
+   null check on first session, consecutive day
+   increment, reset on missed day.
 ═══════════════════════════════════════════ */
 function logSession(data) {
   const now = new Date();
@@ -637,8 +548,16 @@ function logSession(data) {
     const yest = new Date();
     yest.setDate(yest.getDate() - 1);
     const yStr = yest.toISOString().split('T')[0];
-    if (appState.lastDate !== yStr) {
-      appState.streak = Math.max(appState.streak, 1);
+
+    if (appState.lastDate === null) {
+      /* Very first session ever */
+      appState.streak = 1;
+    } else if (appState.lastDate === yStr) {
+      /* Consecutive day — increment */
+      appState.streak++;
+    } else {
+      /* Missed a day — reset */
+      appState.streak = 1;
     }
     appState.lastDate = td;
   }
@@ -680,53 +599,35 @@ function showStats(show) {
    LOCAL STORAGE
 ═══════════════════════════════════════════ */
 function loadLibrary() {
-  try {
-    const raw = localStorage.getItem(LIBRARY_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch (_) { return null; }
+  try { const raw = localStorage.getItem(LIBRARY_KEY); if (!raw) return null; return JSON.parse(raw); }
+  catch (_) { return null; }
 }
 
 function saveLibrary(books) {
-  const lib = {
-    version:   2,
-    createdAt: (library && library.createdAt) ? library.createdAt : today(),
-    books
-  };
+  const lib = { version: 2, createdAt: (library && library.createdAt) ? library.createdAt : today(), books };
   localStorage.setItem(LIBRARY_KEY, JSON.stringify(lib));
   library = lib;
 }
 
 function loadState() {
   try {
-    const raw = localStorage.getItem(STATE_KEY);
-    const defaults = {
-      streak: 0, sessions: 0, mins: 0,
-      lastDate: null, markedDates: [], log: [], reflections: {}
-    };
+    const raw      = localStorage.getItem(STATE_KEY);
+    const defaults = { streak: 0, sessions: 0, mins: 0, lastDate: null, markedDates: [], log: [], reflections: {} };
     return raw ? Object.assign(defaults, JSON.parse(raw)) : defaults;
   } catch (_) {
     return { streak: 0, sessions: 0, mins: 0, lastDate: null, markedDates: [], log: [], reflections: {} };
   }
 }
 
-function saveState() {
-  localStorage.setItem(STATE_KEY, JSON.stringify(appState));
-}
+function saveState() { localStorage.setItem(STATE_KEY, JSON.stringify(appState)); }
 
 /* ═══════════════════════════════════════════
    HELPERS
 ═══════════════════════════════════════════ */
-function today() {
-  return new Date().toISOString().split('T')[0];
-}
+function today() { return new Date().toISOString().split('T')[0]; }
 
 function escHtml(str) {
-  return String(str)
-    .replace(/&/g,  '&amp;')
-    .replace(/</g,  '&lt;')
-    .replace(/>/g,  '&gt;')
-    .replace(/"/g,  '&quot;');
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function formatLabel(fmt) {
