@@ -1,19 +1,17 @@
 /* ═══════════════════════════════════════════
    The Right Chapter — script.js
-   Version 2.0 · Stage 3: Oracle API connected
+   Version 2.0 · Stage 3 + reveal restructure
 ═══════════════════════════════════════════ */
 
 'use strict';
 
-/* ── Storage keys ── */
 const LIBRARY_KEY = 'trc_library';
 const STATE_KEY   = 'trc_state';
 
-/* ── App state ── */
-let library  = null;
-let appState = null;
-let editReturnScreen  = 'screen-oracle';
-let lastOracleResult  = null;
+let library          = null;
+let appState         = null;
+let editReturnScreen = 'screen-oracle';
+let lastOracleResult = null;
 
 /* ═══════════════════════════════════════════
    SCREEN ROUTER
@@ -21,10 +19,7 @@ let lastOracleResult  = null;
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
   const target = document.getElementById(id);
-  if (target) {
-    target.style.display = 'block';
-    window.scrollTo(0, 0);
-  }
+  if (target) { target.style.display = 'block'; window.scrollTo(0, 0); }
 }
 
 /* ═══════════════════════════════════════════
@@ -33,7 +28,6 @@ function showScreen(id) {
 document.addEventListener('DOMContentLoaded', () => {
   library  = loadLibrary();
   appState = loadState();
-
   wireButtons();
 
   if (library && library.books && library.books.length >= 3) {
@@ -50,17 +44,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ═══════════════════════════════════════════
-   WIRE ALL BUTTONS
+   WIRE BUTTONS
 ═══════════════════════════════════════════ */
 function wireButtons() {
 
-  /* LANDING */
   document.getElementById('landing-cta').addEventListener('click', () => {
     initShelfSetup([]);
     showScreen('screen-shelf-setup');
   });
 
-  /* SHELF SETUP */
   document.getElementById('add-book-btn').addEventListener('click', () => {
     addBookRow('book-rows', onShelfRowChange);
   });
@@ -73,7 +65,6 @@ function wireButtons() {
     showScreen('screen-shelf-confirm');
   });
 
-  /* SHELF CONFIRM */
   document.getElementById('confirm-oracle-btn').addEventListener('click', () => {
     updateOracleShelfLabel();
     showStats(false);
@@ -86,7 +77,6 @@ function wireButtons() {
     showScreen('screen-edit-shelf');
   });
 
-  /* ORACLE INTAKE */
   document.getElementById('oracle-input').addEventListener('input', onOracleInputChange);
   document.getElementById('oracle-submit-btn').addEventListener('click', submitToOracle);
 
@@ -96,7 +86,6 @@ function wireButtons() {
     showScreen('screen-edit-shelf');
   });
 
-  /* REVEAL CARD */
   document.getElementById('rev-mark-btn').addEventListener('click', markRead);
   document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
 
@@ -115,7 +104,6 @@ function wireButtons() {
     showScreen('screen-edit-shelf');
   });
 
-  /* EDIT SHELF */
   document.getElementById('edit-add-book-btn').addEventListener('click', () => {
     addBookRow('edit-book-rows', onEditRowChange);
   });
@@ -135,7 +123,7 @@ function wireButtons() {
 }
 
 /* ═══════════════════════════════════════════
-   ORACLE — the main event
+   ORACLE
 ═══════════════════════════════════════════ */
 async function submitToOracle() {
   const input = document.getElementById('oracle-input').value.trim();
@@ -231,16 +219,10 @@ function addBookRow(containerId, onChange, prefill = {}) {
     onChange();
   });
 
-  row.querySelectorAll('input').forEach(inp => {
-    inp.addEventListener('input', onChange);
-  });
-
+  row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', onChange));
   container.appendChild(row);
   onChange();
-
-  if (!prefill.title) {
-    row.querySelector('.book-title-input').focus();
-  }
+  if (!prefill.title) row.querySelector('.book-title-input').focus();
 }
 
 function collectBooks(containerId) {
@@ -252,24 +234,14 @@ function collectBooks(containerId) {
     const fmtBtn = row.querySelector('.fmt-pill.on');
     const format = fmtBtn ? fmtBtn.dataset.fmt : 'print';
     if (title && author) {
-      books.push({
-        id:      String(Date.now() + Math.random()),
-        title, author, format,
-        pages:   null,
-        addedAt: today()
-      });
+      books.push({ id: String(Date.now() + Math.random()), title, author, format, pages: null, addedAt: today() });
     }
   });
   return books;
 }
 
-function onShelfRowChange() {
-  updateShelfProgress('book-rows', 'shelf-progress', 'shelf-confirm-btn');
-}
-
-function onEditRowChange() {
-  updateShelfProgress('edit-book-rows', 'edit-shelf-progress', 'edit-save-btn');
-}
+function onShelfRowChange() { updateShelfProgress('book-rows', 'shelf-progress', 'shelf-confirm-btn'); }
+function onEditRowChange()  { updateShelfProgress('edit-book-rows', 'edit-shelf-progress', 'edit-save-btn'); }
 
 function updateShelfProgress(containerId, progressId, btnId) {
   const books      = collectBooks(containerId);
@@ -332,9 +304,7 @@ function onOracleInputChange() {
   const btn     = document.getElementById('oracle-submit-btn');
   const counter = document.getElementById('char-count');
   const len     = input.value.length;
-
   btn.disabled = len < 5;
-
   if (len > 20) {
     counter.textContent   = `${len} / 500`;
     counter.style.display = 'block';
@@ -388,23 +358,35 @@ function stopLoadingMessages() {
    REVEAL CARD
 ═══════════════════════════════════════════ */
 function renderReveal(data) {
-  document.getElementById('rev-title').textContent      = data.title         || '';
-  document.getElementById('rev-author').textContent     = data.author        || '';
+
+  /* Oracle message — shown in its own card above the book */
   document.getElementById('rev-oracle-msg').textContent = data.oracleMessage || '';
 
+  /* Book */
+  document.getElementById('rev-title').textContent  = data.title  || '';
+  document.getElementById('rev-author').textContent = data.author || '';
+
+  /* Page reference */
   const pageEl    = document.getElementById('rev-page');
   const pageSubEl = document.getElementById('rev-page-sub');
-
-// Always display the page reference cleanly regardless of type
   pageEl.style.fontSize  = '';
   pageEl.style.fontStyle = '';
-  pageEl.textContent     = data.pageRef;
+  pageEl.textContent     = data.pageRef || '';
   pageSubEl.textContent  = 'open to this page and begin';
 
+  /* Summary — below the page box */
+  const summaryEl = document.getElementById('rev-summary');
+  if (summaryEl) {
+    summaryEl.textContent = data.summary || '';
+    summaryEl.style.display = data.summary ? 'block' : 'none';
+  }
+
+  /* Format badge */
   const badgeEl       = document.getElementById('rev-format-badge');
   badgeEl.textContent = formatLabel(data.format);
   badgeEl.className   = `badge b-format-${data.format || 'print'}`;
 
+  /* Audible link */
   const audibleEl = document.getElementById('rev-audible');
   if (data.format === 'audio') {
     const q = encodeURIComponent((data.title || '') + ' ' + (data.author || ''));
@@ -414,6 +396,7 @@ function renderReveal(data) {
     audibleEl.style.display = 'none';
   }
 
+  /* Mark read state */
   const markBtn = document.getElementById('rev-mark-btn');
   const doneEl  = document.getElementById('rev-done');
   if (appState.markedDates && appState.markedDates.includes(today())) {
@@ -426,8 +409,8 @@ function renderReveal(data) {
     doneEl.style.display = 'none';
   }
 
-  document.getElementById('r-text').value           = '';
-  document.getElementById('saved-ok').style.display = 'none';
+  document.getElementById('r-text').value            = '';
+  document.getElementById('saved-ok').style.display  = 'none';
 
   showScreen('screen-reveal');
 }
@@ -472,7 +455,7 @@ function saveReflect() {
 }
 
 /* ═══════════════════════════════════════════
-   SESSION LOG
+   SESSION LOG — streak fixed
 ═══════════════════════════════════════════ */
 function logSession(data) {
   const now = new Date();
@@ -482,8 +465,16 @@ function logSession(data) {
     const yest = new Date();
     yest.setDate(yest.getDate() - 1);
     const yStr = yest.toISOString().split('T')[0];
-    if (appState.lastDate !== yStr) {
-      appState.streak = Math.max(appState.streak, 1);
+
+    if (appState.lastDate === null) {
+      /* Very first session ever */
+      appState.streak = 1;
+    } else if (appState.lastDate === yStr) {
+      /* Consecutive day — increment streak */
+      appState.streak++;
+    } else {
+      /* Missed a day — reset */
+      appState.streak = 1;
     }
     appState.lastDate = td;
   }
@@ -545,33 +536,24 @@ function saveLibrary(books) {
 function loadState() {
   try {
     const raw      = localStorage.getItem(STATE_KEY);
-    const defaults = {
-      streak: 0, sessions: 0, mins: 0,
-      lastDate: null, markedDates: [], log: [], reflections: {}
-    };
+    const defaults = { streak: 0, sessions: 0, mins: 0, lastDate: null, markedDates: [], log: [], reflections: {} };
     return raw ? Object.assign(defaults, JSON.parse(raw)) : defaults;
   } catch(_) {
     return { streak: 0, sessions: 0, mins: 0, lastDate: null, markedDates: [], log: [], reflections: {} };
   }
 }
 
-function saveState() {
-  localStorage.setItem(STATE_KEY, JSON.stringify(appState));
-}
+function saveState() { localStorage.setItem(STATE_KEY, JSON.stringify(appState)); }
 
 /* ═══════════════════════════════════════════
    HELPERS
 ═══════════════════════════════════════════ */
-function today() {
-  return new Date().toISOString().split('T')[0];
-}
+function today() { return new Date().toISOString().split('T')[0]; }
 
 function escHtml(str) {
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function formatLabel(fmt) {
