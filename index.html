@@ -124,14 +124,15 @@
       <p>The oracle speaks</p>
     </header>
 
-    <!-- ORACLE MESSAGE — full width card above the book -->
+    <!-- Oracle message card -->
     <section class="oracle-speaks-card" aria-live="polite">
       <div class="oracle-label">✦ &nbsp;The oracle speaks</div>
-      <div class="oracle-message" id="rev-oracle-msg"></div>
+      <div id="rev-oracle-msg"></div>
     </section>
 
-    <!-- BOOK REVEAL -->
+    <!-- Book reveal card -->
     <section class="result-card visible" id="reveal-card">
+
       <div class="book-title" id="rev-title"></div>
       <div class="book-author" id="rev-author"></div>
 
@@ -140,25 +141,38 @@
         <span class="badge b-done" id="rev-done" style="display:none">Marked read today ✓</span>
       </div>
 
+      <!-- Page box -->
       <div class="page-box">
         <div class="page-num" id="rev-page"></div>
-        <div class="page-sub" id="rev-page-sub"></div>
-        <div class="page-note" id="rev-summary"></div>
+        <div class="page-sub">suggested starting point</div>
       </div>
 
+      <!-- Why this page -->
+      <p class="oracle-why" id="rev-page-why"></p>
+
+      <!-- After reading nudge -->
+      <div class="oracle-step-block" id="rev-after-reading-block">
+        <div class="oracle-step-label">After reading</div>
+        <div class="oracle-step" id="rev-after-reading"></div>
+      </div>
+
+      <!-- Audible link -->
       <a class="audible-link" id="rev-audible" href="#" target="_blank" rel="noopener" style="display:none">
         Listen on Audible →
       </a>
 
       <div class="btn-row">
         <button type="button" class="rr-btn mark-btn" id="rev-mark-btn">Mark read today</button>
+        <button type="button" class="rr-btn" id="ask-again-btn">Ask again</button>
       </div>
+
     </section>
 
+    <!-- Reflection -->
     <div class="divider" aria-hidden="true"><span>reflection</span></div>
 
     <section class="reflect-card" aria-label="Reflection">
-      <div class="card-head">What does this bring up for you?</div>
+      <div class="card-head" id="rev-reflection-prompt">What does this bring up for you?</div>
       <textarea id="r-text" placeholder="Write a few thoughts after your session…" aria-label="Reflection notes"></textarea>
       <div style="display:flex;align-items:center;gap:12px;">
         <button type="button" class="save-btn" id="save-reflect-btn">Save reflection</button>
@@ -169,9 +183,9 @@
     <div class="divider" aria-hidden="true"><span>what's next</span></div>
 
     <div class="btn-row">
-      <button type="button" class="rr-btn" id="ask-again-btn">Ask the oracle again</button>
       <button type="button" class="rr-btn" id="reveal-edit-shelf-btn">Edit my shelf</button>
     </div>
+
   </div>
 
   <!-- EDIT SHELF -->
@@ -194,7 +208,6 @@
   </div>
 
 </main>
-
 <script src="script.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
