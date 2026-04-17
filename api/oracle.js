@@ -6,11 +6,24 @@ module.exports = async function handler(req, res) {
 
   const { input, books } = req.body || {};
 
-  if (!input || !books || !books.length) {
-    return res.status(400).json({ error: 'Missing input or books' });
+if (!input) {
+    return res.status(400).json({ error: 'Missing input' });
   }
 
-  const bookList = books
+  const activeBooks = (books && books.length) ? books : [
+    { title: 'Daily Reflections', author: 'Alcoholics Anonymous', format: 'print' },
+    { title: 'The Four Agreements', author: 'Don Miguel Ruiz', format: 'print' },
+    { title: 'Atomic Habits', author: 'James Clear', format: 'print' },
+    { title: 'This Naked Mind', author: 'Annie Grace', format: 'print' },
+    { title: 'The Alchemist', author: 'Paulo Coelho', format: 'print' },
+    { title: 'The Road Less Traveled', author: 'M. Scott Peck', format: 'print' },
+    { title: 'Alcohol Explained', author: 'William Porter', format: 'print' },
+    { title: 'Becoming Supernatural', author: 'Dr. Joe Dispenza', format: 'print' },
+    { title: 'Alcoholics Anonymous', author: 'Alcoholics Anonymous', format: 'print' },
+    { title: 'Twelve Steps and Twelve Traditions', author: 'Alcoholics Anonymous', format: 'print' },
+  ];
+
+  const bookList = activeBooks
     .map((b, i) => `${i + 1}. "${b.title}" by ${b.author} [format: ${b.format}]`)
     .join('\n');
 
