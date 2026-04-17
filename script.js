@@ -392,15 +392,9 @@ function renderReveal(data) {
   /* Mark read */
   const markBtn = document.getElementById('rev-mark-btn');
   const doneEl  = document.getElementById('rev-done');
-  if (appState.markedDates && appState.markedDates.includes(today())) {
-    markBtn.textContent = 'Read today ✓';
-    markBtn.classList.add('done');
-    doneEl.style.display = 'inline';
-  } else {
-    markBtn.textContent = 'Mark read today';
-    markBtn.classList.remove('done');
-    doneEl.style.display = 'none';
-  }
+markBtn.textContent = 'Mark read today';
+  markBtn.classList.remove('done');
+  doneEl.style.display = 'none';
 
   document.getElementById('r-text').value           = '';
   document.getElementById('saved-ok').style.display = 'none';
