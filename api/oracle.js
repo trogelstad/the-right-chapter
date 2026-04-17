@@ -1,84 +1,61 @@
-/* ═══════════════════════════════════════════
-   The Right Chapter — api/oracle.js
-   Vercel serverless function
-   Stage 3: Personal shelf oracle — v2
-═══════════════════════════════════════════ */
-
 module.exports = async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { input, books } = req.body;
+  const { input, books } = req.body || {};
 
   if (!input || !books || !books.length) {
     return res.status(400).json({ error: 'Missing input or books' });
   }
 
-  const bookList = books.map((b, i) =>
-    `${i + 1}. "${b.title}" by ${b.author} [format: ${b.format}]`
-  ).join('\n');
+  const bookList = books
+    .map((b, i) => `${i + 1}. "${b.title}" by ${b.author} [format: ${b.format}]`)
+    .join('\n');
 
-  const systemPrompt = `You are The Right Chapter oracle — a wise, emotionally precise guide who reads between the lines of what someone is carrying and finds the exact page they need.
+  const prompt = `You are The Right Chapter oracle. A person has come to you carrying something real. Read what they wrote, feel the weight of it, and find the exact book and page they need from their shelf.
 
-THE USER'S SHELF:
+THE SHELF:
 ${bookList}
 
-YOUR TASK:
-Read what the user wrote. Feel the weight of it. Then match them to the single most resonant book on their shelf and tell them exactly where to open it.
+WHAT THEY ARE CARRYING:
+"${input}"
 
-MATCHING RULES:
-1. Choose ONLY from the books listed above. Never suggest a book not on this shelf.
-2. Choose the single best match. Trust your instinct.
-3. If no book is a perfect match, choose the least-wrong one. Always choose. Never refuse.
+YOUR ORACLE MESSAGE has three parts, written as one flowing block of prose with no headers, no labels, no line breaks between parts:
 
-ORACLE MESSAGE RULES:
-Your oracle message must have three distinct parts, written as flowing prose with no headers or labels:
+PART ONE — WHAT YOU SEE (3-4 sentences):
+Read beneath the surface of what they wrote. Name what is actually happening emotionally. Not a summary — a deeper reading. Be specific and human. Sound like someone who has lived through something similar.
 
-PART 1 — EMOTIONAL REFLECTION (2-3 sentences):
-Name what the user is actually carrying. Not a summary of what they wrote — a deeper reading of it. What is really going on underneath? Be specific. Be human. Sound like someone who has been through it too.
+PART TWO — WHY THIS BOOK (2-3 sentences):
+Connect their exact emotional state to the specific quality of this book that meets this moment. Do not give a generic book description. Make the connection feel inevitable — like of course it is this book, right now.
 
-PART 2 — THE BRIDGE (2-3 sentences):
-Connect their emotional state to why this specific book holds something for them right now. Do not describe the book generically. Speak to the particular quality of this book that meets this particular moment. Make it feel inevitable.
+PART THREE — HOW TO ENTER (2 sentences):
+Tell them how to approach the reading. Something like: "Read slowly. Let the first sentence that lands, land." or "Don't rush. Read it twice if you need to." Make it feel like instruction from someone wise.
 
-PART 3 — THE INVITATION (1-2 sentences):
-Tell them how to enter the book. Not just "open it" — give them a way in. Something like: "Read slowly. Let the first sentence that lands, land." or "Don't start at the beginning. Open somewhere in the middle and see what finds you." This should feel like a gentle instruction from someone wise.
-
-TONE RULES:
-- Second person throughout ("you", "your")
-- No phrases like "this book will help you" or "I recommend" or "you might find"
-- No generic affirmations ("you've got this", "things will get better")
-- Sound like something that already knew. Quiet. Certain. Present.
-- Each part should be emotionally precise, not poetic for its own sake
+YOUR SUMMARY is one single crisp sentence — a distillation of what this reading offers this person right now. It should feel like the caption beneath the experience. Examples: "This is about learning to hold your love without trying to carry his journey." or "This is permission to stop performing and start becoming." or "This is the map for the territory you are already in."
 
 PAGE REFERENCE RULES:
-This is critical. You must give a specific page number — not a vague section.
+You know the approximate length of most published books. Use that knowledge.
+- Give a specific page number always. Never say "the first third" or "somewhere in the middle" — those phrases are forbidden.
+- Use emotional judgment: grief and endings open in the final third, restlessness opens in the middle, new beginnings open in the first third.
+- If estimating, say "around page 94" — still a number, not a range.
+- Never invent chapter titles or section names.
 
-You know the approximate length of most published books from your training. Use that knowledge.
-
-- For well-known books: give a specific page number based on the book's actual length. Use emotional judgment for placement — grief and endings open in the final third, restlessness and searching open in the middle, new beginnings and hope open in the first third. Pick the actual page number, not a range.
-- For obscure books you are less certain about: still give your best specific page estimate. Say "Open to around page [N]" if you are estimating.
-- NEVER say "open in the first third" or "open somewhere in the middle" — these are forbidden. Always give a number.
-- NEVER invent chapter titles or section names.
-- The page reference should feel like the oracle chose it deliberately, not randomly.
-
-RESPONSE FORMAT:
-Respond with valid JSON only. No explanation, no preamble, no markdown fences. Just the JSON object.
+RESPONSE: Return valid JSON only. No markdown. No explanation. Just this object:
 
 {
-  "title": "exact book title from the shelf",
-  "author": "exact author name from the shelf",
-  "format": "print or audio or ebook — match what is listed for that book",
-  "oracleMessage": "The full three-part oracle message as one flowing block of prose. Do not use line breaks between parts — let it read as connected paragraphs.",
-  "pageRef": "Page 47",
+  "title": "exact title from the shelf",
+  "author": "exact author from the shelf",
+  "format": "print or audio or ebook",
+  "oracleMessage": "All three parts as one flowing block of prose — emotionally precise, no headers, no line breaks between parts",
+  "summary": "One crisp sentence distilling what this reading offers right now",
+  "pageRef": "Page 92",
   "pageRefType": "number"
-}
-
-Note: pageRefType should almost always be "number". Only use "section" as an absolute last resort for a book so obscure you have no basis for any estimate.`;
+}`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const apiResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type':      'application/json',
@@ -87,46 +64,39 @@ Note: pageRefType should almost always be "number". Only use "section" as an abs
       },
       body: JSON.stringify({
         model:      'claude-sonnet-4-5',
-        max_tokens: 900,
-        messages: [
-          {
-            role:    'user',
-            content: `Here is what I am carrying right now:\n\n"${input}"\n\nPlease find my chapter.`
-          }
-        ],
-        system: systemPrompt
+        max_tokens: 1000,
+        messages:   [{ role: 'user', content: prompt }]
       })
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      console.error('Anthropic API error:', err);
-      return res.status(500).json({ error: 'Oracle API error', detail: err });
+    if (!apiResponse.ok) {
+      const errText = await apiResponse.text();
+      console.error('Anthropic error:', errText);
+      return res.status(500).json({ error: 'API error', detail: errText });
     }
 
-    const data = await response.json();
-    const raw  = data.content?.[0]?.text || '';
+    const apiData  = await apiResponse.json();
+    const rawText  = apiData.content?.[0]?.text || '';
+
+    console.log('Raw oracle response:', rawText);
 
     let parsed;
     try {
-      const clean = raw.replace(/```json|```/g, '').trim();
-      parsed = JSON.parse(clean);
-    } catch (parseErr) {
-      console.error('JSON parse error. Raw response:', raw);
-      return res.status(500).json({ error: 'Could not parse oracle response', raw });
+      const cleaned = rawText.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(cleaned);
+    } catch (e) {
+      console.error('Parse failed. Raw was:', rawText);
+      return res.status(500).json({ error: 'Parse error', raw: rawText });
     }
 
-    const required = ['title', 'author', 'oracleMessage', 'pageRef', 'pageRefType'];
-    for (const field of required) {
-      if (!parsed[field]) {
-        return res.status(500).json({ error: `Missing field: ${field}`, parsed });
-      }
+    if (!parsed.title || !parsed.oracleMessage || !parsed.pageRef) {
+      return res.status(500).json({ error: 'Incomplete response', parsed });
     }
 
     return res.status(200).json(parsed);
 
   } catch (err) {
-    console.error('Unexpected oracle error:', err);
-    return res.status(500).json({ error: 'Unexpected error', message: err.message });
+    console.error('Handler error:', err);
+    return res.status(500).json({ error: err.message });
   }
 };
