@@ -79,14 +79,17 @@ function wireButtons() {
   document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
 
 document.getElementById('ask-again-btn').addEventListener('click', () => {
-    document.getElementById('oracle-input').value = '';
+    document.getElementById('oracle-input').value    = '';
     document.getElementById('char-count').textContent = '';
 
-    /* Reset mark read button for new session */
+    /* Force reset mark-read button regardless of today's state */
     const markBtn = document.getElementById('rev-mark-btn');
     const doneEl  = document.getElementById('rev-done');
-    if (markBtn) { markBtn.textContent = 'Mark read today'; markBtn.classList.remove('done'); }
-    if (doneEl)  { doneEl.style.display = 'none'; }
+    if (markBtn) {
+      markBtn.textContent = 'Mark read today';
+      markBtn.classList.remove('done');
+    }
+    if (doneEl) doneEl.style.display = 'none';
 
     updateOracleShelfLabel();
     renderStats();
@@ -430,12 +433,16 @@ function saveReflect() {
   const val = document.getElementById('r-text').value.trim();
   if (!val) return;
 
+  const promptEl = document.getElementById('rev-reflection-prompt');
+  const prompt   = promptEl ? promptEl.textContent.trim() : '';
+
   const key   = String(Date.now());
   const entry = {
     date:    today(),
     text:    val,
     title:   currentReveal ? currentReveal.title   : '',
-    pageRef: currentReveal ? currentReveal.pageRef : ''
+    pageRef: currentReveal ? currentReveal.pageRef : '',
+    prompt:  prompt
   };
 
   if (!appState.reflections) appState.reflections = {};
@@ -455,15 +462,21 @@ function renderJournal() {
 
   const raw = appState.reflections || {};
 
-  /* Support both old format (date string → text) and new format (timestamp → object) */
   const entries = Object.entries(raw)
     .map(([key, val]) => {
       if (typeof val === 'string') {
-        return { key, date: key, text: val, title: '', pageRef: '' };
+        return { key, date: key, text: val, title: '', pageRef: '', prompt: '' };
       }
-      return { key, date: val.date || key, text: val.text, title: val.title || '', pageRef: val.pageRef || '' };
+      return {
+        key,
+        date:    val.date    || key,
+        text:    val.text    || '',
+        title:   val.title   || '',
+        pageRef: val.pageRef || '',
+        prompt:  val.prompt  || ''
+      };
     })
-    .sort((a, b) => b.key.localeCompare(a.key)); // newest first
+    .sort((a, b) => b.key.localeCompare(a.key));
 
   if (entries.length === 0) {
     el.innerHTML = '<p class="log-empty">No reflections yet. Save one above after your session.</p>';
@@ -477,6 +490,9 @@ function renderJournal() {
     const bookLine = entry.title
       ? `<span class="accordion-book">${escHtml(entry.title)}${entry.pageRef ? ' · ' + escHtml(entry.pageRef) : ''}</span>`
       : '';
+    const promptLine = entry.prompt
+      ? `<p class="journal-prompt">${escHtml(entry.prompt)}</p>`
+      : '';
     return `
       <div class="accordion-entry">
         <button type="button" class="accordion-header" aria-expanded="false" onclick="toggleAccordion(this)">
@@ -487,6 +503,7 @@ function renderJournal() {
           <span class="accordion-chevron">›</span>
         </button>
         <div class="accordion-body" hidden>
+          ${promptLine}
           <p class="reflection-text">${escHtml(entry.text)}</p>
         </div>
       </div>
