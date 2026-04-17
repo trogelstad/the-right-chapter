@@ -22,24 +22,31 @@ ${bookList}
 WHAT THEY ARE CARRYING:
 "${input}"
 
-YOUR ORACLE MESSAGE has three parts, written as one flowing block of prose with no headers, no labels, no line breaks between parts:
+You will return six fields. Each one matters. Do them all with care.
 
-PART ONE — WHAT YOU SEE (3-4 sentences):
-Read beneath the surface of what they wrote. Name what is actually happening emotionally. Not a summary — a deeper reading. Be specific and human. Sound like someone who has lived through something similar.
+FIELD 1 — oracleMessage:
+Three parts written as one flowing block of prose, no headers, no labels:
+Part one (3-4 sentences): Read beneath the surface. Name what is actually happening emotionally — not a summary, a deeper reading. Be specific and human.
+Part two (2-3 sentences): Connect their exact emotional state to why this specific book meets this moment. Make it feel inevitable.
+Part three (2 sentences): Tell them how to approach the reading — slowly, twice, out loud, whatever fits.
 
-PART TWO — WHY THIS BOOK (2-3 sentences):
-Connect their exact emotional state to the specific quality of this book that meets this moment. Do not give a generic book description. Make the connection feel inevitable — like of course it is this book, right now.
+FIELD 2 — summary:
+One crisp sentence. A distillation of what this reading offers right now. Should feel like the caption beneath the experience. Example: "This is about learning to hold your love without trying to carry his journey."
 
-PART THREE — HOW TO ENTER (2 sentences):
-Tell them how to approach the reading. Something like: "Read slowly. Let the first sentence that lands, land." or "Don't rush. Read it twice if you need to." Make it feel like instruction from someone wise.
+FIELD 3 — pageRef:
+A specific page number always. You know the approximate length of most published books — use that knowledge. Never say "the first third" or "somewhere in the middle." Say "Page 87" or "Around page 112." Use emotional judgment for placement: grief and endings open in the final third, restlessness opens in the middle, new beginnings open in the first third.
 
-YOUR SUMMARY is one single crisp sentence — a distillation of what this reading offers this person right now. It should feel like the caption beneath the experience. Examples: "This is about learning to hold your love without trying to carry his journey." or "This is permission to stop performing and start becoming." or "This is the map for the territory you are already in."
+FIELD 4 — pageWhy:
+2-3 sentences explaining why you chose this specific page or section. Be concrete — what will they find there? Why does it speak to what they are carrying right now? This should feel like the oracle explaining its reasoning, not a book description. Example: "Around page 117, you will find the chapter written for families — not the person drinking, but the people who love them. It does not promise you can fix this. It offers something rarer: a way to stay present without drowning."
+
+FIELD 5 — afterReading:
+A single specific action for after they read. Not generic. Tied directly to what they are carrying and what the book offers. Should feel like a wise instruction. Example: "After reading, write down one boundary you need to hold this week — not to punish him, but to protect your own ground."
+
+FIELD 6 — reflectionPrompt:
+A single question for their reflection journal. Specific to their situation and the book. Not "What does this bring up for you?" — that is too generic. Make it pointed and personal. Example: "Where in your life are you trying to fix something that was never yours to carry?"
 
 PAGE REFERENCE RULES:
-You know the approximate length of most published books. Use that knowledge.
-- Give a specific page number always. Never say "the first third" or "somewhere in the middle" — those phrases are forbidden.
-- Use emotional judgment: grief and endings open in the final third, restlessness opens in the middle, new beginnings open in the first third.
-- If estimating, say "around page 94" — still a number, not a range.
+- Always give a specific number. "Page 87" or "Around page 112" — never a range or a third.
 - Never invent chapter titles or section names.
 
 RESPONSE: Return valid JSON only. No markdown. No explanation. Just this object:
@@ -48,10 +55,13 @@ RESPONSE: Return valid JSON only. No markdown. No explanation. Just this object:
   "title": "exact title from the shelf",
   "author": "exact author from the shelf",
   "format": "print or audio or ebook",
-  "oracleMessage": "All three parts as one flowing block of prose — emotionally precise, no headers, no line breaks between parts",
-  "summary": "One crisp sentence distilling what this reading offers right now",
-  "pageRef": "Page 92",
-  "pageRefType": "number"
+  "oracleMessage": "three-part flowing prose",
+  "summary": "one crisp sentence",
+  "pageRef": "Page 87",
+  "pageRefType": "number",
+  "pageWhy": "2-3 sentences explaining why this page",
+  "afterReading": "one specific post-reading action",
+  "reflectionPrompt": "one pointed personal reflection question"
 }`;
 
   try {
@@ -64,7 +74,7 @@ RESPONSE: Return valid JSON only. No markdown. No explanation. Just this object:
       },
       body: JSON.stringify({
         model:      'claude-sonnet-4-5',
-        max_tokens: 1000,
+        max_tokens: 1400,
         messages:   [{ role: 'user', content: prompt }]
       })
     });
