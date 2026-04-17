@@ -1133,15 +1133,11 @@ textarea::placeholder { color: var(--ink-4); }
 }
 /* ═══════════════════════════════════════════
    THE RIGHT CHAPTER V2 — Component Styles
-   Paste at the bottom of style.css
-   Do not remove any existing styles above
 ═══════════════════════════════════════════ */
 
-/* ── Hide all screens except active ── */
 .screen { display: none; }
 #screen-landing { display: block; }
 
-/* ── Landing card ── */
 .landing-card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -1187,10 +1183,7 @@ textarea::placeholder { color: var(--ink-4); }
   text-align: center;
 }
 
-/* ── Shelf setup intro ── */
-.setup-intro {
-  margin-bottom: 1.75rem;
-}
+.setup-intro { margin-bottom: 1.75rem; }
 
 .setup-headline {
   font-family: var(--serif);
@@ -1206,7 +1199,6 @@ textarea::placeholder { color: var(--ink-4); }
   line-height: 1.65;
 }
 
-/* ── Book entry row ── */
 .book-row {
   background: var(--card);
   border: 1px solid var(--line);
@@ -1242,9 +1234,7 @@ textarea::placeholder { color: var(--ink-4); }
   box-shadow: 0 0 0 3px rgba(123,114,200,0.13);
 }
 
-.book-row-fields input::placeholder {
-  color: var(--ink-4);
-}
+.book-row-fields input::placeholder { color: var(--ink-4); }
 
 .book-row-meta {
   display: flex;
@@ -1253,12 +1243,7 @@ textarea::placeholder { color: var(--ink-4); }
   gap: 8px;
 }
 
-/* ── Format pills (Print / Audio / eBook) ── */
-.format-pills {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
+.format-pills { display: flex; gap: 6px; flex-wrap: wrap; }
 
 .fmt-pill {
   padding: 5px 12px;
@@ -1285,16 +1270,13 @@ textarea::placeholder { color: var(--ink-4); }
   font-weight: 500;
 }
 
-/* ── Remove book button ── */
 .remove-book-btn {
-  width: 28px;
-  height: 28px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   border: 1px solid var(--line-med);
   background: var(--inset);
   color: var(--ink-3);
   font-size: 16px;
-  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1309,7 +1291,6 @@ textarea::placeholder { color: var(--ink-4); }
   border-color: #e0b0b0;
 }
 
-/* ── Add another book link ── */
 .add-book-btn {
   display: inline-block;
   font-size: 13px;
@@ -1326,11 +1307,8 @@ textarea::placeholder { color: var(--ink-4); }
   transition: color 0.14s;
 }
 
-.add-book-btn:hover {
-  color: var(--plum-mid);
-}
+.add-book-btn:hover { color: var(--plum-mid); }
 
-/* ── Shelf progress counter ── */
 .shelf-progress {
   font-size: 12px;
   margin-bottom: 1.25rem;
@@ -1338,16 +1316,9 @@ textarea::placeholder { color: var(--ink-4); }
   transition: color 0.2s;
 }
 
-.shelf-progress.warn {
-  color: var(--brass);
-}
+.shelf-progress.warn { color: var(--brass); }
+.shelf-progress.ok  { color: var(--sage); font-weight: 500; }
 
-.shelf-progress.ok {
-  color: var(--sage);
-  font-weight: 500;
-}
-
-/* ── Shelf confirmation card ── */
 .confirm-card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -1373,7 +1344,6 @@ textarea::placeholder { color: var(--ink-4); }
   font-style: italic;
 }
 
-/* ── Shelf item list (confirmation screen) ── */
 .shelf-item {
   display: flex;
   align-items: center;
@@ -1384,10 +1354,7 @@ textarea::placeholder { color: var(--ink-4); }
   flex-wrap: wrap;
 }
 
-.shelf-item:last-child {
-  border-bottom: none;
-  margin-bottom: 1.5rem;
-}
+.shelf-item:last-child { border-bottom: none; margin-bottom: 1.5rem; }
 
 .shelf-item-title {
   font-size: 14px;
@@ -1397,31 +1364,12 @@ textarea::placeholder { color: var(--ink-4); }
   min-width: 120px;
 }
 
-.shelf-item-author {
-  font-size: 13px;
-  color: var(--ink-3);
-}
+.shelf-item-author { font-size: 13px; color: var(--ink-3); }
 
-/* ── Format badges ── */
-.b-format-print {
-  background: var(--plum-tint);
-  color: var(--plum);
-  border-color: var(--plum-ring);
-}
+.b-format-print { background: var(--plum-tint); color: var(--plum); border-color: var(--plum-ring); }
+.b-format-audio { background: var(--brass-tint); color: var(--brass); border-color: rgba(122,90,36,0.24); }
+.b-format-ebook { background: var(--sage-tint); color: var(--sage); border-color: var(--sage-ring); }
 
-.b-format-audio {
-  background: var(--brass-tint);
-  color: var(--brass);
-  border-color: rgba(122,90,36,0.24);
-}
-
-.b-format-ebook {
-  background: var(--sage-tint);
-  color: var(--sage);
-  border-color: var(--sage-ring);
-}
-
-/* ── Text link (secondary actions) ── */
 .text-link {
   display: block;
   font-size: 13px;
@@ -1438,28 +1386,10 @@ textarea::placeholder { color: var(--ink-4); }
   transition: color 0.14s;
 }
 
-.text-link:hover {
-  color: var(--plum);
-}
+.text-link:hover { color: var(--plum); }
+.shelf-link { margin-top: 1rem; }
 
-.shelf-link {
-  margin-top: 1rem;
-}
-
-/* ── Oracle intake card ── */
-.oracle-card {
-  margin-bottom: 2rem;
-}
-
-.oracle-question {
-  font-family: var(--serif);
-  font-size: 30px;
-  font-weight: 400;
-  color: var(--ink);
-  line-height: 1.25;
-  margin-bottom: 0.6rem;
-  letter-spacing: -0.015em;
-}
+.oracle-card { margin-bottom: 2rem; }
 
 .oracle-helper {
   font-size: 13px;
@@ -1474,26 +1404,18 @@ textarea::placeholder { color: var(--ink-4); }
   margin-bottom: 1.25rem;
 }
 
-.oracle-input-wrap textarea {
-  min-height: 130px;
-  width: 100%;
-}
+.oracle-input-wrap textarea { min-height: 130px; width: 100%; }
 
 .char-count {
   position: absolute;
-  bottom: 10px;
-  right: 12px;
+  bottom: 10px; right: 12px;
   font-size: 11px;
   color: var(--ink-4);
   display: none;
   pointer-events: none;
 }
 
-/* ── Loading card ── */
-.loading-card {
-  text-align: center;
-  padding: 4rem 2rem;
-}
+.loading-card { text-align: center; padding: 4rem 2rem; }
 
 .loading-glyph {
   font-size: 28px;
@@ -1517,7 +1439,7 @@ textarea::placeholder { color: var(--ink-4); }
   transition: opacity 0.3s ease;
 }
 
-/* ── Oracle label on reveal card ── */
+/* ── Oracle label ── */
 .oracle-label {
   font-size: 10px;
   font-weight: 500;
@@ -1527,66 +1449,7 @@ textarea::placeholder { color: var(--ink-4); }
   margin-bottom: 1rem;
 }
 
-/* ── Oracle message (the core reveal text) ── */
-.oracle-message {
-  font-family: var(--serif);
-  font-size: 17px;
-  font-style: italic;
-  color: var(--ink-2);
-  line-height: 1.75;
-  border-left: 2px solid var(--plum-ring);
-  padding-left: 1rem;
-  margin: 1.25rem 0;
-}
-
-/* ── Audible affiliate link ── */
-.audible-link {
-  display: inline-block;
-  margin: 0.75rem 0 1rem;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--plum);
-  text-decoration: underline;
-  text-decoration-color: var(--plum-ring);
-  text-underline-offset: 3px;
-  transition: color 0.14s;
-}
-
-.audible-link:hover {
-  color: var(--plum-mid);
-}
-
-/* ── Disabled spin button state ── */
-.spin-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-}
-
-/* ── Mobile adjustments for new components ── */
-@media (max-width: 540px) {
-  .book-row-fields {
-    grid-template-columns: 1fr;
-  }
-
-  .landing-headline {
-    font-size: 22px;
-  }
-
-  .oracle-question {
-    font-size: 24px;
-  }
-
-  .confirm-card,
-  .landing-card {
-    padding: 1.75rem 1.25rem;
-  }
-
-  .shelf-item {
-    gap: 6px;
-  }
-/* Oracle speaks card — above the book reveal */
+/* ── Oracle speaks card — sits above book reveal ── */
 .oracle-speaks-card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -1607,10 +1470,6 @@ textarea::placeholder { color: var(--ink-4); }
   pointer-events: none;
 }
 
-.oracle-speaks-card .oracle-label {
-  margin-bottom: 1rem;
-}
-
 /* Pull quote — first 2 sentences, large serif */
 .oracle-pull {
   font-family: var(--serif);
@@ -1618,11 +1477,11 @@ textarea::placeholder { color: var(--ink-4); }
   font-style: italic;
   color: var(--ink);
   line-height: 1.55;
-  margin-bottom: 1rem;
+  margin-bottom: 1.1rem;
   letter-spacing: -0.01em;
 }
 
-/* Body — remaining sentences, smaller with left border */
+/* Body — remaining sentences, sans with left border */
 .oracle-body {
   font-family: var(--sans);
   font-size: 14px;
@@ -1632,5 +1491,38 @@ textarea::placeholder { color: var(--ink-4); }
   border-left: 2px solid var(--plum-ring);
   padding-left: 1rem;
   margin: 0;
+}
+
+/* ── Audible link ── */
+.audible-link {
+  display: inline-block;
+  margin: 0.75rem 0 1rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--plum);
+  text-decoration: underline;
+  text-decoration-color: var(--plum-ring);
+  text-underline-offset: 3px;
+  transition: color 0.14s;
+}
+
+.audible-link:hover { color: var(--plum-mid); }
+
+/* ── Disabled button ── */
+.spin-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* ── Mobile ── */
+@media (max-width: 540px) {
+  .book-row-fields { grid-template-columns: 1fr; }
+  .landing-headline { font-size: 22px; }
+  .oracle-question  { font-size: 24px; }
+  .confirm-card, .landing-card { padding: 1.75rem 1.25rem; }
+  .shelf-item { gap: 6px; }
+  .oracle-pull { font-size: 17px; }
 }
 
