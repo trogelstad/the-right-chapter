@@ -80,9 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
    Stops after 4 seconds of silence.
 ═══════════════════════════════════════════ */
 function initVoiceInput(textareaId) {
-  /* ── Mobile detection — skip entirely on phones/tablets ── */
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent) === false);
+  /* ── Mobile detection — skip on phones/tablets, OS keyboard handles mic there ── */
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   if (isMobile) return;
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -300,10 +299,10 @@ async function submitToOracle() {
     }
 
     const data = await response.json();
-    currentReveal = data; /* Store for journal */
+    currentReveal = data;
 
-    /* Only log stats for personal shelf sessions */
-    if (!isSampleMode) { logSession(data); }
+    /* Always log sessions + minutes. logSession handles sample vs personal internally. */
+    logSession(data);
 
     renderReveal(data);
 
@@ -475,7 +474,11 @@ const LOADING_MESSAGES = [
   'Reading what you brought…',
   'Moving through your shelf…',
   'Something is aligning…',
-  'Your chapter is close…'
+  'Your chapter is close…',
+  'Listening between the lines…',
+  'The words are finding you…',
+  'Your chapter is choosing itself…',
+  'Something true is rising…'
 ];
 let loadingTimer = null;
 let loadingIndex = 0;
@@ -719,42 +722,49 @@ function toggleAccordion(btn) {
 
 /* ═══════════════════════════════════════════
    SESSION LOG
-   Streak logic: null = first ever (1),
-   yesterday = consecutive (++), else reset (1).
-   Sessions count every oracle query.
-   Minutes use selectedMins (10/20/30).
+   Sessions + minutes always count (personal
+   and sample mode). Streak and log only update
+   for personal shelf sessions.
+   renderStats() called immediately so numbers
+   update without needing to navigate away.
 ═══════════════════════════════════════════ */
 function logSession(data) {
   const now = new Date();
   const td  = today();
 
-  if (appState.lastDate !== td) {
-    const yest = new Date();
-    yest.setDate(yest.getDate() - 1);
-    const yStr = yest.toISOString().split('T')[0];
-    if (appState.lastDate === null) {
-      appState.streak = 1;
-    } else if (appState.lastDate === yStr) {
-      appState.streak++;
-    } else {
-      appState.streak = 1;
+  /* Always increment — every "Find my chapter" press counts */
+  appState.sessions++;
+  appState.mins += selectedMins;
+
+  /* Streak and log only for personal shelf */
+  if (!isSampleMode) {
+    if (appState.lastDate !== td) {
+      const yest = new Date();
+      yest.setDate(yest.getDate() - 1);
+      const yStr = yest.toISOString().split('T')[0];
+      if (appState.lastDate === null) {
+        appState.streak = 1;
+      } else if (appState.lastDate === yStr) {
+        appState.streak++;
+      } else {
+        appState.streak = 1;
+      }
+      appState.lastDate = td;
     }
-    appState.lastDate = td;
+
+    appState.log.unshift({
+      date:    now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      time:    now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      title:   data.title,
+      author:  data.author,
+      pageRef: data.pageRef,
+      marked:  false
+    });
+    if (appState.log.length > 30) appState.log.pop();
   }
 
-  appState.sessions++;              /* Every "Find my chapter" press */
-  appState.mins += selectedMins;    /* Uses the selected reading time */
-
-  appState.log.unshift({
-    date:    now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    time:    now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-    title:   data.title,
-    author:  data.author,
-    pageRef: data.pageRef,
-    marked:  false
-  });
-  if (appState.log.length > 30) appState.log.pop();
   saveState();
+  renderStats(); /* Update immediately — don't wait for Ask Again */
 }
 
 /* ═══════════════════════════════════════════
