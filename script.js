@@ -1,617 +1,812 @@
 /* ═══════════════════════════════════════════
-   THE RIGHT CHAPTER V2 — Complete Style Additions
-   PASTE AT THE BOTTOM of existing style.css.
-   Do not remove anything above.
+   The Right Chapter — script.js  v5
+   All features: time selector, voice-to-text,
+   sample mode, journal accordion, fixed streak
 ═══════════════════════════════════════════ */
+'use strict';
 
-/* ── Screen router ── */
-.screen { display: none; }
-#screen-landing { display: block; }
+const LIBRARY_KEY = 'trc_library';
+const STATE_KEY   = 'trc_state';
 
 /* ══════════════════════════════════════════
-   LANDING
+   SAMPLE SHELF — 18-book curated starter
+   Swap or expand this array anytime.
 ══════════════════════════════════════════ */
-.landing-card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  padding: 2.5rem 2rem;
-  box-shadow: var(--sh-md);
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-.landing-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: rgba(255,248,235,0.80);
-  pointer-events: none;
-}
-.landing-headline {
-  font-family: var(--serif);
-  font-size: 26px;
-  font-weight: 400;
-  color: var(--ink);
-  line-height: 1.35;
-  margin-bottom: 0.75rem;
-  letter-spacing: -0.01em;
-}
-.landing-sub {
-  font-size: 15px;
-  color: var(--ink-2);
-  margin-bottom: 2rem;
-  line-height: 1.6;
-}
-.landing-micro {
-  font-size: 11px;
-  color: var(--ink-4);
-  margin-top: 1rem;
-  letter-spacing: 0.04em;
-  text-align: center;
-}
-.landing-divider {
-  font-size: 11px;
-  color: var(--ink-4);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  margin: 1.1rem 0 1rem;
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.landing-divider::before,
-.landing-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-}
-.sample-btn {
-  display: block;
-  width: 100%;
-  padding: 14px 20px;
-  border-radius: var(--r-xl);
-  border: 1.5px solid var(--line-med);
-  background: transparent;
-  color: var(--ink-3);
-  font-family: var(--sans);
-  font-size: 15px;
-  cursor: pointer;
-  text-align: center;
-  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
-  margin-bottom: 0;
-}
-.sample-btn:hover {
-  background: var(--hover);
-  color: var(--ink-2);
-  border-color: var(--plum-ring);
-  transform: translateY(-1px);
+const SAMPLE_SHELF = [
+  { id: 'sample-01', title: 'Daily Reflections',                author: 'Alcoholics Anonymous', format: 'print', pages: 400, addedAt: 'sample' },
+  { id: 'sample-02', title: 'The Four Agreements',              author: 'Don Miguel Ruiz',       format: 'print', pages: 160, addedAt: 'sample' },
+  { id: 'sample-03', title: 'The Alchemist',                    author: 'Paulo Coelho',          format: 'print', pages: 208, addedAt: 'sample' },
+  { id: 'sample-04', title: 'Alcoholics Anonymous',             author: 'Alcoholics Anonymous', format: 'print', pages: 575, addedAt: 'sample' },
+  { id: 'sample-05', title: 'Becoming Supernatural',            author: 'Dr. Joe Dispenza',      format: 'print', pages: 380, addedAt: 'sample' },
+  { id: 'sample-06', title: 'Alcohol Explained',                author: 'William Porter',        format: 'print', pages: 200, addedAt: 'sample' },
+  { id: 'sample-07', title: 'This Naked Mind',                  author: 'Annie Grace',           format: 'print', pages: 260, addedAt: 'sample' },
+  { id: 'sample-08', title: 'Quit Drinking Without Willpower',  author: 'Allen Carr',            format: 'print', pages: 288, addedAt: 'sample' },
+  { id: 'sample-09', title: 'Quantum Success',                  author: 'Sandra Anne Taylor',    format: 'print', pages: 256, addedAt: 'sample' },
+  { id: 'sample-10', title: 'Twelve Steps and Twelve Traditions', author: 'Alcoholics Anonymous', format: 'print', pages: 192, addedAt: 'sample' },
+  { id: 'sample-11', title: 'The Road Less Traveled',           author: 'M. Scott Peck',         format: 'print', pages: 316, addedAt: 'sample' },
+  { id: 'sample-12', title: 'Living Sober',                     author: 'Alcoholics Anonymous', format: 'print', pages: 120, addedAt: 'sample' },
+  { id: 'sample-13', title: 'The Automatic Millionaire',        author: 'David Bach',            format: 'print', pages: 240, addedAt: 'sample' },
+  { id: 'sample-14', title: 'The Energy of Money',              author: 'Maria Nemeth Ph.D.',    format: 'print', pages: 304, addedAt: 'sample' },
+  { id: 'sample-15', title: 'The Red Road to Wellbriety',       author: 'White Bison Inc.',      format: 'print', pages: 200, addedAt: 'sample' },
+  { id: 'sample-16', title: 'The Holy Bible',                   author: 'Various',               format: 'print', pages: 1200, addedAt: 'sample' },
+  { id: 'sample-17', title: 'Atomic Habits',                    author: 'James Clear',           format: 'print', pages: 320, addedAt: 'sample' },
+  { id: 'sample-18', title: 'The Energy of Money',              author: 'Maria Nemeth Ph.D.',    format: 'print', pages: 304, addedAt: 'sample' },
+];
+
+/* ── App state ── */
+let library          = null;
+let appState         = null;
+let editReturnScreen = 'screen-oracle';
+let currentReveal        = null;   /* Tracks the current oracle result for journal */
+let isSampleMode         = false;  /* True when using sample shelf, no localStorage writes */
+let selectedMins         = 10;     /* Reading time selected by user — default 10 min */
+let currentSessionMarked = false;  /* Resets each new oracle result — allows marking each session */
+
+/* ═══════════════════════════════════════════
+   SCREEN ROUTER
+═══════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+  const target = document.getElementById(id);
+  if (target) { target.style.display = 'block'; window.scrollTo(0, 0); }
 }
 
-/* ══════════════════════════════════════════
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  library  = loadLibrary();
+  appState = loadState();
+  wireButtons();
+  initVoiceInput('oracle-input');
+  initVoiceInput('r-text');
+
+  if (library && library.books && library.books.length >= 3) {
+    updateOracleShelfLabel();
+    renderStats();
+    showScreen('screen-oracle');
+  } else if (library && library.books && library.books.length > 0) {
+    initShelfSetup(library.books);
+    showScreen('screen-shelf-setup');
+  } else {
+    showScreen('screen-landing');
+  }
+});
+
+/* ═══════════════════════════════════════════
+   VOICE-TO-TEXT (Web Speech API)
+   Desktop only — mobile OS keyboard has its
+   own built-in mic, no button needed there.
+   Stops after 4 seconds of silence.
+═══════════════════════════════════════════ */
+function initVoiceInput(textareaId) {
+  /* ── Mobile detection — skip entirely on phones/tablets ── */
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent) === false);
+  if (isMobile) return;
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return; /* Browser doesn't support Speech API */
+
+  const textarea = document.getElementById(textareaId);
+  if (!textarea) return;
+
+  const wrap = textarea.closest('.oracle-input-wrap');
+  if (!wrap) return;
+
+  /* Create the mic button */
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'mic-btn';
+  btn.setAttribute('aria-label', 'Start voice input');
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
+  wrap.appendChild(btn);
+
+  const recognition = new SR();
+  recognition.continuous     = true;   /* Keep listening — we control stop via timer */
+  recognition.interimResults = true;
+  recognition.lang           = 'en-US';
+
+  let listening     = false;
+  let silenceTimer  = null;
+  const SILENCE_MS  = 4000; /* Stop after 4 seconds of silence */
+
+  function resetSilenceTimer() {
+    if (silenceTimer) clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(() => {
+      if (listening) recognition.stop();
+    }, SILENCE_MS);
+  }
+
+  function clearSilenceTimer() {
+    if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+  }
+
+  btn.addEventListener('click', () => {
+    if (listening) { recognition.stop(); return; }
+    try { recognition.start(); } catch (e) { /* Already running */ }
+  });
+
+  recognition.onstart = () => {
+    listening = true;
+    btn.classList.add('listening');
+    btn.setAttribute('aria-label', 'Stop recording');
+    resetSilenceTimer(); /* Begin 4-second countdown immediately */
+  };
+
+  recognition.onend = () => {
+    listening = false;
+    btn.classList.remove('listening');
+    btn.setAttribute('aria-label', 'Start voice input');
+    clearSilenceTimer();
+  };
+
+  recognition.onerror = () => {
+    listening = false;
+    btn.classList.remove('listening');
+    clearSilenceTimer();
+  };
+
+  recognition.onresult = e => {
+    let transcript = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      transcript += e.results[i][0].transcript;
+    }
+    textarea.value = transcript;
+    textarea.dispatchEvent(new Event('input'));
+    resetSilenceTimer(); /* Reset the 4-second timer every time speech is detected */
+  };
+}
+
+/* ═══════════════════════════════════════════
+   WIRE ALL BUTTONS
+═══════════════════════════════════════════ */
+function wireButtons() {
+
+  /* LANDING */
+  document.getElementById('landing-cta').addEventListener('click', () => {
+    initShelfSetup([]);
+    showScreen('screen-shelf-setup');
+  });
+  document.getElementById('sample-cta').addEventListener('click', enterSampleMode);
+
+  /* SHELF SETUP */
+  document.getElementById('add-book-btn').addEventListener('click', () => addBookRow('book-rows', onShelfRowChange));
+  document.getElementById('shelf-confirm-btn').addEventListener('click', () => {
+    const books = collectBooks('book-rows');
+    if (books.length < 3) return;
+    saveLibrary(books);
+    renderShelfDisplay(books, 'shelf-display');
+    showScreen('screen-shelf-confirm');
+  });
+
+  /* SHELF CONFIRM */
+  document.getElementById('confirm-oracle-btn').addEventListener('click', () => {
+    updateOracleShelfLabel();
+    renderStats();
+    showScreen('screen-oracle');
+  });
+  document.getElementById('confirm-edit-btn').addEventListener('click', () => {
+    editReturnScreen = 'screen-shelf-confirm';
+    initEditShelf();
+    showScreen('screen-edit-shelf');
+  });
+
+  /* ORACLE INTAKE */
+  document.getElementById('oracle-input').addEventListener('input', onOracleInputChange);
+  document.getElementById('oracle-submit-btn').addEventListener('click', submitToOracle);
+  document.getElementById('oracle-edit-shelf-btn').addEventListener('click', () => {
+    editReturnScreen = 'screen-oracle';
+    initEditShelf();
+    showScreen('screen-edit-shelf');
+  });
+
+  /* TIME SELECTOR */
+  document.getElementById('time-pills').addEventListener('click', e => {
+    const pill = e.target.closest('.time-pill');
+    if (!pill) return;
+    document.querySelectorAll('.time-pill').forEach(p => p.classList.remove('on'));
+    pill.classList.add('on');
+    selectedMins = parseInt(pill.dataset.mins, 10);
+  });
+
+  /* SAMPLE MODE */
+  document.getElementById('sample-add-shelf-btn').addEventListener('click', exitSampleMode);
+  document.getElementById('sample-upgrade-btn').addEventListener('click', exitSampleMode);
+
+  /* REVEAL — mark read */
+  document.getElementById('rev-mark-btn').addEventListener('click', markRead);
+
+  /* REVEAL — ask again: clears input, resets mark-read button, back to oracle */
+  document.getElementById('ask-again-btn').addEventListener('click', () => {
+    document.getElementById('oracle-input').value    = '';
+    document.getElementById('char-count').textContent = '';
+    /* Force-reset mark-read button for the new session */
+    const markBtn = document.getElementById('rev-mark-btn');
+    const doneEl  = document.getElementById('rev-done');
+    if (markBtn) { markBtn.textContent = 'Mark read today'; markBtn.classList.remove('done'); }
+    if (doneEl)  { doneEl.style.display = 'none'; }
+    updateOracleShelfLabel();
+    renderStats();
+    showScreen('screen-oracle');
+  });
+
+  /* REVEAL — reflection */
+  document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
+
+  /* REVEAL — edit shelf */
+  document.getElementById('reveal-edit-shelf-btn').addEventListener('click', () => {
+    editReturnScreen = 'screen-reveal';
+    initEditShelf();
+    showScreen('screen-edit-shelf');
+  });
+
+  /* EDIT SHELF */
+  document.getElementById('edit-add-book-btn').addEventListener('click', () => addBookRow('edit-book-rows', onEditRowChange));
+  document.getElementById('edit-save-btn').addEventListener('click', () => {
+    const books = collectBooks('edit-book-rows');
+    if (books.length < 3) return;
+    saveLibrary(books);
+    library = loadLibrary();
+    updateOracleShelfLabel();
+    showScreen(editReturnScreen);
+  });
+  document.getElementById('edit-cancel-btn').addEventListener('click', () => showScreen(editReturnScreen));
+}
+
+/* ═══════════════════════════════════════════
+   SAMPLE MODE
+═══════════════════════════════════════════ */
+function enterSampleMode() {
+  isSampleMode = true;
+  updateOracleShelfLabel();
+  renderStats();
+  showScreen('screen-oracle');
+}
+
+function exitSampleMode() {
+  isSampleMode = false;
+  initShelfSetup([]);
+  showScreen('screen-shelf-setup');
+}
+
+/* ═══════════════════════════════════════════
+   ORACLE
+═══════════════════════════════════════════ */
+async function submitToOracle() {
+  const input = document.getElementById('oracle-input').value.trim();
+  if (input.length < 5) return;
+
+  /* Use sample shelf or personal shelf */
+  const books = isSampleMode ? SAMPLE_SHELF : (loadLibrary()?.books || []);
+  if (!books || !books.length) { showScreen('screen-shelf-setup'); return; }
+
+  showScreen('screen-loading');
+  startLoadingMessages();
+
+  try {
+    const response = await fetch('/api/oracle', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ input, books })
+    });
+
+    stopLoadingMessages();
+
+    if (!response.ok) {
+      console.error('Oracle error:', await response.json().catch(() => ({})));
+      showOracleError();
+      return;
+    }
+
+    const data = await response.json();
+    currentReveal = data; /* Store for journal */
+
+    /* Only log stats for personal shelf sessions */
+    if (!isSampleMode) { logSession(data); }
+
+    renderReveal(data);
+
+  } catch (err) {
+    console.error('Oracle fetch error:', err);
+    stopLoadingMessages();
+    showOracleError();
+  }
+}
+
+function showOracleError() {
+  showScreen('screen-oracle');
+  const btn = document.getElementById('oracle-submit-btn');
+  btn.textContent = 'The oracle went quiet — try again';
+  setTimeout(() => { btn.textContent = 'Find my chapter →'; }, 4000);
+}
+
+/* ═══════════════════════════════════════════
    SHELF SETUP
-══════════════════════════════════════════ */
-.setup-intro { margin-bottom: 1.75rem; }
-.setup-headline { font-family: var(--serif); font-size: 24px; font-weight: 400; color: var(--ink); margin-bottom: 0.5rem; }
-.setup-sub { font-size: 14px; color: var(--ink-2); line-height: 1.65; }
-.book-row {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  padding: 1rem 1.1rem;
-  margin-bottom: 0.75rem;
-  box-shadow: var(--sh-xs);
-}
-.book-row-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 0.65rem;
-}
-.book-row-fields input {
-  width: 100%;
-  border: 1px solid var(--line-med);
-  border-radius: var(--r-sm);
-  padding: 9px 12px;
-  font-size: 14px;
-  font-family: var(--sans);
-  color: var(--ink);
-  background: var(--inset);
-  box-shadow: inset 0 1px 3px rgba(45,30,10,0.05);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.book-row-fields input:focus {
-  outline: none;
-  border-color: var(--line-focus);
-  box-shadow: 0 0 0 3px rgba(123,114,200,0.13);
-}
-.book-row-fields input::placeholder { color: var(--ink-4); }
-.book-row-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.format-pills { display: flex; gap: 6px; flex-wrap: wrap; }
-.fmt-pill {
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1.5px solid var(--line-med);
-  background: var(--inset);
-  color: var(--ink-3);
-  font-family: var(--sans);
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.14s, border-color 0.14s, color 0.14s;
-}
-.fmt-pill:hover { background: var(--hover); color: var(--ink-2); border-color: var(--plum-ring); }
-.fmt-pill.on { background: var(--plum-tint); border-color: var(--plum-ring); color: var(--plum); font-weight: 500; }
-.remove-book-btn {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--line-med);
-  background: var(--inset);
-  color: var(--ink-3);
-  font-size: 16px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.14s, color 0.14s, border-color 0.14s;
-}
-.remove-book-btn:hover { background: #f9e8e8; color: #9b3030; border-color: #e0b0b0; }
-.add-book-btn {
-  display: inline-block;
-  font-size: 13px; color: var(--plum);
-  font-family: var(--sans); cursor: pointer;
-  padding: 4px 0; margin-bottom: 1.25rem;
-  border: none; background: none;
-  text-decoration: underline;
-  text-decoration-color: var(--plum-ring);
-  text-underline-offset: 3px;
-  transition: color 0.14s;
-}
-.add-book-btn:hover { color: var(--plum-mid); }
-.shelf-progress { font-size: 12px; margin-bottom: 1.25rem; min-height: 20px; transition: color 0.2s; }
-.shelf-progress.warn { color: var(--brass); }
-.shelf-progress.ok   { color: var(--sage); font-weight: 500; }
-.confirm-card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  padding: 2rem 1.75rem;
-  box-shadow: var(--sh-md);
-  text-align: center;
-}
-.confirm-headline { font-family: var(--serif); font-size: 26px; font-weight: 400; color: var(--ink); margin-bottom: 0.5rem; }
-.confirm-sub { font-size: 14px; color: var(--ink-2); line-height: 1.65; margin-bottom: 1.75rem; font-style: italic; }
-.shelf-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); text-align: left; flex-wrap: wrap; }
-.shelf-item:last-child { border-bottom: none; margin-bottom: 1.5rem; }
-.shelf-item-title { font-size: 14px; font-weight: 500; color: var(--ink); flex: 1; min-width: 120px; }
-.shelf-item-author { font-size: 13px; color: var(--ink-3); }
-.b-format-print { background: var(--plum-tint);  color: var(--plum);  border-color: var(--plum-ring); }
-.b-format-audio { background: var(--brass-tint); color: var(--brass); border-color: rgba(122,90,36,0.24); }
-.b-format-ebook { background: var(--sage-tint);  color: var(--sage);  border-color: var(--sage-ring); }
-.text-link {
-  display: block; font-size: 13px; color: var(--ink-3);
-  text-align: center; margin-top: 0.85rem;
-  cursor: pointer; border: none; background: none;
-  font-family: var(--sans);
-  text-decoration: underline; text-decoration-color: var(--line-med);
-  text-underline-offset: 3px; transition: color 0.14s;
-}
-.text-link:hover { color: var(--plum); }
-.shelf-link { margin-top: 1rem; }
-
-/* ══════════════════════════════════════════
-   SAMPLE BANNER (oracle screen, sample mode)
-══════════════════════════════════════════ */
-.sample-banner {
-  background: var(--plum-tint);
-  border: 1px solid var(--plum-ring);
-  border-radius: var(--r-md);
-  padding: 10px 14px;
-  font-size: 13px;
-  color: var(--plum);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 1rem;
-}
-.sample-banner-link {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--plum);
-  text-decoration: underline;
-  border: none;
-  background: none;
-  cursor: pointer;
-  white-space: nowrap;
+═══════════════════════════════════════════ */
+function initShelfSetup(existingBooks) {
+  const container = document.getElementById('book-rows');
+  container.innerHTML = '';
+  const seed = existingBooks.length > 0 ? existingBooks : [{}, {}, {}];
+  seed.forEach(b => addBookRow('book-rows', onShelfRowChange, b));
+  updateShelfProgress('book-rows', 'shelf-progress', 'shelf-confirm-btn');
 }
 
-/* ══════════════════════════════════════════
-   ORACLE INTRO — V1 style above the input card
-══════════════════════════════════════════ */
-.oracle-intro {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding: 0 0.5rem;
-}
-.oracle-intro-headline {
-  font-family: var(--serif);
-  font-size: 28px;
-  font-weight: 400;
-  font-style: italic;
-  color: var(--ink);
-  line-height: 1.35;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.01em;
-}
-.oracle-intro-sub {
-  font-family: var(--serif);
-  font-size: 20px;
-  font-weight: 400;
-  font-style: italic;
-  color: var(--plum);
-  line-height: 1.4;
-  margin-bottom: 1rem;
-}
-.oracle-intro-copy {
-  font-size: 14px;
-  color: var(--ink-3);
-  line-height: 1.75;
-}
-.oracle-intro::after {
-  content: '';
-  display: block;
-  width: 60px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--plum-ring), transparent);
-  margin: 1.25rem auto 0;
+function addBookRow(containerId, onChange, prefill = {}) {
+  const container = document.getElementById(containerId);
+  const row = document.createElement('div');
+  row.className = 'book-row';
+  const fmt = prefill.format || 'print';
+  row.innerHTML = `
+    <div class="book-row-fields">
+      <input type="text" class="book-title-input" placeholder="Book title"
+        value="${escHtml(prefill.title || '')}" aria-label="Book title" autocomplete="off" />
+      <input type="text" class="book-author-input" placeholder="Author"
+        value="${escHtml(prefill.author || '')}" aria-label="Author name" autocomplete="off" />
+    </div>
+    <div class="book-row-meta">
+      <div class="format-pills" role="group" aria-label="Format">
+        <button type="button" class="fmt-pill ${fmt==='print'?'on':''}" data-fmt="print">📖 Print</button>
+        <button type="button" class="fmt-pill ${fmt==='audio'?'on':''}" data-fmt="audio">🎧 Audio</button>
+        <button type="button" class="fmt-pill ${fmt==='ebook'?'on':''}" data-fmt="ebook">📱 eBook</button>
+      </div>
+      <button type="button" class="remove-book-btn" aria-label="Remove book">×</button>
+    </div>
+  `;
+  row.querySelectorAll('.fmt-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      row.querySelectorAll('.fmt-pill').forEach(p => p.classList.remove('on'));
+      btn.classList.add('on');
+    });
+  });
+  row.querySelector('.remove-book-btn').addEventListener('click', () => { row.remove(); onChange(); });
+  row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', onChange));
+  container.appendChild(row);
+  onChange();
+  if (!prefill.title) row.querySelector('.book-title-input').focus();
 }
 
-/* ══════════════════════════════════════════
-   ORACLE INPUT CARD
-══════════════════════════════════════════ */
-.oracle-card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  padding: 1.75rem 1.75rem 1.5rem;
-  box-shadow: var(--sh-md);
-  margin-bottom: 2rem;
-  position: relative;
-  overflow: hidden;
-}
-.oracle-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--plum) 0%, var(--plum-soft) 50%, var(--sage) 100%);
-}
-.oracle-question {
-  font-family: var(--serif);
-  font-size: 26px;
-  font-weight: 400;
-  color: var(--ink);
-  line-height: 1.25;
-  margin-bottom: 1rem;
-  letter-spacing: -0.015em;
-}
-.oracle-input-wrap {
-  position: relative;
-  margin-bottom: 1.25rem;
-}
-.oracle-input-wrap textarea { min-height: 130px; width: 100%; }
-.char-count {
-  position: absolute;
-  bottom: 10px; right: 44px; /* shift left to leave room for mic button */
-  font-size: 11px;
-  color: var(--ink-4);
-  display: none;
-  pointer-events: none;
+function collectBooks(containerId) {
+  const rows  = document.querySelectorAll(`#${containerId} .book-row`);
+  const books = [];
+  rows.forEach(row => {
+    const title  = row.querySelector('.book-title-input').value.trim();
+    const author = row.querySelector('.book-author-input').value.trim();
+    const fmtBtn = row.querySelector('.fmt-pill.on');
+    const format = fmtBtn ? fmtBtn.dataset.fmt : 'print';
+    if (title && author) {
+      books.push({ id: String(Date.now() + Math.random()), title, author, format, pages: null, addedAt: today() });
+    }
+  });
+  return books;
 }
 
-/* ══════════════════════════════════════════
-   MIC BUTTON (voice-to-text)
-   Injected by JS into .oracle-input-wrap
-══════════════════════════════════════════ */
-.mic-btn {
-  position: absolute;
-  bottom: 10px; right: 10px;
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  border: 1px solid var(--line-med);
-  background: var(--card);
-  color: var(--ink-3);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--sh-xs);
-  transition: background 0.14s, color 0.14s, box-shadow 0.14s, border-color 0.14s;
-  z-index: 1;
-}
-.mic-btn:hover {
-  background: var(--hover);
-  color: var(--ink);
-  border-color: var(--plum-ring);
-}
-.mic-btn.listening {
-  background: var(--plum-tint);
-  border-color: var(--plum);
-  color: var(--plum);
-  animation: pulse-mic 1.2s ease-in-out infinite;
-}
-@keyframes pulse-mic {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(59,47,110,0.3); }
-  50%       { box-shadow: 0 0 0 6px rgba(59,47,110,0); }
+function onShelfRowChange() { updateShelfProgress('book-rows', 'shelf-progress', 'shelf-confirm-btn'); }
+function onEditRowChange()  { updateShelfProgress('edit-book-rows', 'edit-shelf-progress', 'edit-save-btn'); }
+
+function updateShelfProgress(containerId, progressId, btnId) {
+  const books     = collectBooks(containerId);
+  const count     = books.length;
+  const progressEl = document.getElementById(progressId);
+  const btnEl     = document.getElementById(btnId);
+  if (count === 0) {
+    progressEl.textContent = ''; progressEl.className = 'shelf-progress';
+  } else if (count < 3) {
+    progressEl.textContent = `${count} book${count>1?'s':''} added · need at least 3`;
+    progressEl.className   = 'shelf-progress warn';
+  } else {
+    progressEl.textContent = `${count} book${count>1?'s':''} on your shelf ✓`;
+    progressEl.className   = 'shelf-progress ok';
+  }
+  if (btnEl) btnEl.disabled = count < 3;
 }
 
-/* ══════════════════════════════════════════
-   TIME SELECTOR (10 / 20 / 30 min)
-══════════════════════════════════════════ */
-.time-selector {
-  margin-bottom: 1.25rem;
-}
-.time-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-.time-label {
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--ink-3);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.time-pills { display: flex; gap: 8px; }
-.time-pill {
-  padding: 7px 18px;
-  border-radius: 999px;
-  border: 1.5px solid var(--line-med);
-  background: var(--card);
-  color: var(--ink-2);
-  font-family: var(--sans);
-  font-size: 13px;
-  cursor: pointer;
-  box-shadow: var(--sh-xs);
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-.time-pill:hover { background: var(--hover); color: var(--ink); border-color: var(--plum-ring); }
-.time-pill.on {
-  background: var(--plum);
-  border-color: var(--plum);
-  color: #f5f0e8;
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(59,47,110,0.25);
+/* ═══════════════════════════════════════════
+   EDIT SHELF
+═══════════════════════════════════════════ */
+function initEditShelf() {
+  const lib = loadLibrary();
+  const container = document.getElementById('edit-book-rows');
+  container.innerHTML = '';
+  const books = (lib && lib.books) ? lib.books : [];
+  if (books.length === 0) {
+    addBookRow('edit-book-rows', onEditRowChange);
+    addBookRow('edit-book-rows', onEditRowChange);
+    addBookRow('edit-book-rows', onEditRowChange);
+  } else {
+    books.forEach(b => addBookRow('edit-book-rows', onEditRowChange, b));
+  }
+  updateShelfProgress('edit-book-rows', 'edit-shelf-progress', 'edit-save-btn');
 }
 
-/* ══════════════════════════════════════════
-   LOADING CARD
-══════════════════════════════════════════ */
-.loading-card { text-align: center; padding: 4rem 2rem; }
-.loading-glyph {
-  font-size: 28px; color: var(--plum-soft);
-  display: block; margin-bottom: 1.5rem;
-  animation: pulse-glyph 2.4s ease-in-out infinite;
-}
-@keyframes pulse-glyph {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50%       { opacity: 1;   transform: scale(1.12); }
-}
-.loading-msg {
-  font-family: var(--serif); font-size: 20px; font-weight: 400;
-  color: var(--ink-2); font-style: italic; transition: opacity 0.3s ease;
+/* ═══════════════════════════════════════════
+   SHELF DISPLAY
+═══════════════════════════════════════════ */
+function renderShelfDisplay(books, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = books.map(b => `
+    <div class="shelf-item">
+      <span class="shelf-item-title">${escHtml(b.title)}</span>
+      <span class="shelf-item-author">${escHtml(b.author)}</span>
+      <span class="badge b-format-${escHtml(b.format)}">${formatLabel(b.format)}</span>
+    </div>
+  `).join('');
 }
 
-/* ══════════════════════════════════════════
-   ORACLE SPEAKS CARD
-   Pull quote (large italic serif) +
-   body text (smaller sans with left border)
-══════════════════════════════════════════ */
-.oracle-speaks-card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  padding: 1.75rem;
-  margin-bottom: 1.25rem;
-  box-shadow: var(--sh-sm);
-  position: relative;
-  overflow: hidden;
-}
-.oracle-speaks-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; height: 1px;
-  background: rgba(255,248,235,0.80);
-  pointer-events: none;
-}
-.oracle-label {
-  font-size: 10px; font-weight: 500; color: var(--plum);
-  letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 1rem;
-}
-/* Pull quote — first 2 sentences, large italic serif */
-.oracle-pull {
-  font-family: var(--serif);
-  font-size: 20px;
-  font-style: italic;
-  color: var(--ink);
-  line-height: 1.55;
-  margin-bottom: 1.1rem;
-  letter-spacing: -0.01em;
-}
-/* Body text — remaining sentences, smaller with left border */
-.oracle-body {
-  font-family: var(--sans);
-  font-size: 14px;
-  color: var(--ink-2);
-  line-height: 1.75;
-  border-left: 2px solid var(--plum-ring);
-  padding-left: 1rem;
-  margin: 0;
+/* ═══════════════════════════════════════════
+   ORACLE INTAKE
+═══════════════════════════════════════════ */
+function onOracleInputChange() {
+  const input   = document.getElementById('oracle-input');
+  const btn     = document.getElementById('oracle-submit-btn');
+  const counter = document.getElementById('char-count');
+  const len     = input.value.length;
+  btn.disabled  = len < 5;
+  if (len > 20) { counter.textContent = `${len} / 500`; counter.style.display = 'block'; }
+  else { counter.style.display = 'none'; }
 }
 
-/* ══════════════════════════════════════════
-   BOOK REVEAL CARD
-══════════════════════════════════════════ */
-.b-time {
-  background: var(--sage-tint);
-  color: var(--sage);
-  border-color: var(--sage-ring);
+function updateOracleShelfLabel() {
+  const labelEl = document.getElementById('oracle-shelf-label');
+  const countEl = document.getElementById('oracle-shelf-count');
+  const editBtn = document.getElementById('oracle-edit-shelf-btn');
+  const banner  = document.getElementById('sample-banner');
+
+  if (isSampleMode) {
+    if (labelEl) labelEl.textContent    = 'Sample shelf — try the oracle';
+    if (countEl) countEl.textContent    = SAMPLE_SHELF.length;
+    if (editBtn) editBtn.style.display  = 'none';
+    if (banner)  banner.style.display   = 'block';
+  } else {
+    const lib   = loadLibrary();
+    const count = (lib && lib.books) ? lib.books.length : 0;
+    if (labelEl) labelEl.textContent    = 'The right chapter, right now.';
+    if (countEl) countEl.textContent    = count;
+    if (editBtn) editBtn.style.display  = '';
+    if (banner)  banner.style.display   = 'none';
+  }
 }
 
-/* ══════════════════════════════════════════
-   PAGE WHY — italic paragraph with left border
-   "Around page X, you'll find…"
-══════════════════════════════════════════ */
-.oracle-why {
-  font-family: var(--serif);
-  font-size: 15px;
-  font-style: italic;
-  color: var(--ink-2);
-  line-height: 1.75;
-  border-left: 2px solid var(--plum-ring);
-  padding-left: 1rem;
-  margin: 1.25rem 0;
-  min-height: 1em;
+/* ═══════════════════════════════════════════
+   LOADING STATE
+═══════════════════════════════════════════ */
+const LOADING_MESSAGES = [
+  'Reading what you brought…',
+  'Moving through your shelf…',
+  'Something is aligning…',
+  'Your chapter is close…'
+];
+let loadingTimer = null;
+let loadingIndex = 0;
+
+function startLoadingMessages() {
+  loadingIndex = 0;
+  const msgEl = document.getElementById('loading-msg');
+  if (msgEl) msgEl.textContent = LOADING_MESSAGES[0];
+  loadingTimer = setInterval(() => {
+    loadingIndex = (loadingIndex + 1) % LOADING_MESSAGES.length;
+    if (msgEl) {
+      msgEl.style.opacity = '0';
+      setTimeout(() => { msgEl.textContent = LOADING_MESSAGES[loadingIndex]; msgEl.style.opacity = '1'; }, 300);
+    }
+  }, 1800);
 }
 
-/* ══════════════════════════════════════════
-   AFTER READING NUDGE CARD
-══════════════════════════════════════════ */
-.oracle-step-block {
-  background: var(--plum-tint);
-  border: 1px solid var(--plum-ring);
-  border-radius: var(--r-lg);
-  padding: 1rem 1.1rem;
-  margin: 1rem 0 1.25rem;
-}
-.oracle-step-label {
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--plum);
-  letter-spacing: 0.20em;
-  text-transform: uppercase;
-  margin-bottom: 0.4rem;
-}
-.oracle-step {
-  font-size: 14px;
-  color: var(--ink-2);
-  line-height: 1.65;
+function stopLoadingMessages() {
+  if (loadingTimer) { clearInterval(loadingTimer); loadingTimer = null; }
 }
 
-/* ══════════════════════════════════════════
-   AUDIBLE LINK
-══════════════════════════════════════════ */
-.audible-link {
-  display: inline-block; margin: 0.75rem 0 1rem;
-  font-size: 13px; font-weight: 500; color: var(--plum);
-  text-decoration: underline; text-decoration-color: var(--plum-ring);
-  text-underline-offset: 3px; transition: color 0.14s;
-}
-.audible-link:hover { color: var(--plum-mid); }
+/* ═══════════════════════════════════════════
+   REVEAL CARD
+   Splits oracleMessage into pull quote + body.
+   Populates pageWhy, afterReading, reflectionPrompt.
+   Mark-read always resets on new reveal.
+═══════════════════════════════════════════ */
+function renderReveal(data) {
+  /* ── Oracle message — split into pull quote + body text ── */
+  const fullMsg   = data.oracleMessage || '';
+  const sentences = fullMsg.match(/[^.!?]+[.!?]+/g) || [fullMsg];
+  const pullText  = sentences.slice(0, 2).join(' ').trim();
+  const bodyText  = sentences.slice(2).join(' ').trim();
+  const msgEl     = document.getElementById('rev-oracle-msg');
+  if (msgEl) {
+    msgEl.innerHTML = `<p class="oracle-pull">${escHtml(pullText)}</p>` +
+      (bodyText ? `<p class="oracle-body">${escHtml(bodyText)}</p>` : '');
+  }
 
-/* ══════════════════════════════════════════
-   SAMPLE UPGRADE PROMPT (reveal, sample mode)
-══════════════════════════════════════════ */
-.sample-upgrade {
-  margin: 1.5rem 0;
-  background: var(--card);
-  border: 1px solid var(--plum-ring);
-  border-radius: var(--r-xl);
-  padding: 1.75rem;
-  text-align: center;
-}
-.sample-upgrade-text {
-  font-family: var(--serif);
-  font-size: 20px;
-  font-weight: 400;
-  color: var(--ink);
-  margin-bottom: 1rem;
+  /* ── Book ── */
+  document.getElementById('rev-title').textContent  = data.title  || '';
+  document.getElementById('rev-author').textContent = data.author || '';
+
+  /* ── Format badge ── */
+  const badgeEl = document.getElementById('rev-format-badge');
+  badgeEl.textContent = formatLabel(data.format);
+  badgeEl.className   = `badge b-format-${data.format || 'print'}`;
+
+  /* ── Reading time badge ── */
+  const timeBadge = document.getElementById('rev-time-badge');
+  if (timeBadge) {
+    timeBadge.textContent = `${selectedMins} min session`;
+    timeBadge.className   = 'badge b-time';
+  }
+
+  /* ── Page reference ── */
+  document.getElementById('rev-page').textContent = data.pageRef || '';
+
+  /* ── Why this page ── */
+  const whyEl = document.getElementById('rev-page-why');
+  if (whyEl) whyEl.textContent = data.pageWhy || '';
+
+  /* ── After reading nudge ── */
+  const afterEl      = document.getElementById('rev-after-reading');
+  const afterBlockEl = document.getElementById('rev-after-reading-block');
+  if (afterEl && data.afterReading) {
+    afterEl.textContent          = data.afterReading;
+    afterBlockEl.style.display   = 'block';
+  } else if (afterBlockEl) {
+    afterBlockEl.style.display = 'none';
+  }
+
+  /* ── Custom reflection prompt ── */
+  const promptEl = document.getElementById('rev-reflection-prompt');
+  if (promptEl) {
+    promptEl.textContent = data.reflectionPrompt || 'What does this bring up for you?';
+  }
+
+  /* ── Audible link ── */
+  const audibleEl = document.getElementById('rev-audible');
+  if (data.format === 'audio') {
+    const q = encodeURIComponent((data.title || '') + ' ' + (data.author || ''));
+    audibleEl.href         = `https://www.audible.com/search?keywords=${q}&tag=therightchap-20`;
+    audibleEl.style.display = 'block';
+  } else {
+    audibleEl.style.display = 'none';
+  }
+
+  /* ── Mark read — always reset on new session ── */
+  currentSessionMarked    = false;  /* New chapter = fresh mark opportunity */
+  const markBtn = document.getElementById('rev-mark-btn');
+  const doneEl  = document.getElementById('rev-done');
+  markBtn.textContent = 'Mark read today';
+  markBtn.classList.remove('done');
+  doneEl.style.display = 'none';
+
+  /* ── Sample upgrade prompt ── */
+  const upgradeEl = document.getElementById('sample-upgrade');
+  if (upgradeEl) upgradeEl.style.display = isSampleMode ? 'block' : 'none';
+
+  /* ── Clear reflection textarea ── */
+  document.getElementById('r-text').value          = '';
+  document.getElementById('saved-ok').style.display = 'none';
+
+  /* ── Render journal ── */
+  renderJournal();
+
+  showScreen('screen-reveal');
 }
 
-/* ══════════════════════════════════════════
+/* ═══════════════════════════════════════════
+   MARK READ
+   currentSessionMarked gates the button per
+   oracle session — resets in renderReveal.
+   markedDates still tracks dates for streak
+   but no longer blocks the button.
+═══════════════════════════════════════════ */
+function markRead() {
+  if (currentSessionMarked) return; /* Already marked this session */
+  currentSessionMarked = true;
+
+  const td = today();
+
+  /* Only update streak logic on the first mark of the day */
+  if (!appState.markedDates.includes(td)) {
+    appState.markedDates.push(td);
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    const yStr = yest.toISOString().split('T')[0];
+    if (appState.lastDate === yStr) { appState.streak++; }
+    else if (appState.lastDate !== td) { appState.streak = 1; }
+    appState.lastDate = td;
+  }
+
+  saveState();
+  renderStats();
+  document.getElementById('rev-mark-btn').textContent = 'Read today ✓';
+  document.getElementById('rev-mark-btn').classList.add('done');
+  document.getElementById('rev-done').style.display   = 'inline';
+}
+
+/* ═══════════════════════════════════════════
+   SAVE REFLECTION
+   Stores as timestamped object with book,
+   page, and prompt — never overwrites.
+═══════════════════════════════════════════ */
+function saveReflect() {
+  const val = document.getElementById('r-text').value.trim();
+  if (!val) return;
+
+  const promptEl = document.getElementById('rev-reflection-prompt');
+  const prompt   = promptEl ? promptEl.textContent.trim() : '';
+  const key      = String(Date.now());
+  const entry    = {
+    date:    today(),
+    text:    val,
+    title:   currentReveal ? currentReveal.title   : '',
+    pageRef: currentReveal ? currentReveal.pageRef : '',
+    prompt:  prompt
+  };
+
+  if (!appState.reflections) appState.reflections = {};
+  appState.reflections[key] = entry;
+  saveState();
+
+  document.getElementById('r-text').value = '';
+  const ok = document.getElementById('saved-ok');
+  ok.style.display = 'inline';
+  setTimeout(() => { ok.style.display = 'none'; }, 2200);
+
+  renderJournal();
+}
+
+/* ═══════════════════════════════════════════
    JOURNAL ACCORDION
-══════════════════════════════════════════ */
-.accordion-entry {
-  border-bottom: 1px solid var(--line);
-}
-.accordion-entry:last-child {
-  border-bottom: none;
-}
-.accordion-header {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  font-family: var(--sans);
-  transition: opacity 0.14s;
-}
-.accordion-header:hover { opacity: 0.75; }
-.accordion-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.accordion-date {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-}
-.accordion-book {
-  font-size: 11px;
-  color: var(--plum);
-  font-style: italic;
-}
-.accordion-chevron {
-  font-size: 20px;
-  color: var(--ink-3);
-  transition: transform 0.2s;
-  flex-shrink: 0;
-  margin-left: 8px;
-}
-.accordion-header.open .accordion-chevron {
-  transform: rotate(90deg);
-}
-.accordion-body {
-  padding: 0.5rem 0 1rem;
-}
-.journal-prompt {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--plum);
-  font-style: italic;
-  margin-bottom: 8px;
-  letter-spacing: 0.02em;
-}
-.reflection-text {
-  font-size: 14px;
-  color: var(--ink-2);
-  line-height: 1.7;
+   Supports both old format (date → string)
+   and new format (timestamp → object).
+   Shows: date, book + page, prompt, reflection.
+═══════════════════════════════════════════ */
+function renderJournal() {
+  const el = document.getElementById('journal-list');
+  if (!el) return;
+
+  const raw     = appState.reflections || {};
+  const entries = Object.entries(raw)
+    .map(([key, val]) => {
+      if (typeof val === 'string') {
+        return { key, date: key, text: val, title: '', pageRef: '', prompt: '' };
+      }
+      return {
+        key,
+        date:    val.date    || key,
+        text:    val.text    || '',
+        title:   val.title   || '',
+        pageRef: val.pageRef || '',
+        prompt:  val.prompt  || ''
+      };
+    })
+    .sort((a, b) => b.key.localeCompare(a.key)); /* Newest first */
+
+  if (entries.length === 0) {
+    el.innerHTML = '<p class="log-empty">No reflections yet. Save one above after your session.</p>';
+    return;
+  }
+
+  el.innerHTML = entries.map(entry => {
+    const label = new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric'
+    });
+    const bookLine = entry.title
+      ? `<span class="accordion-book">${escHtml(entry.title)}${entry.pageRef ? ' · ' + escHtml(entry.pageRef) : ''}</span>`
+      : '';
+    const promptLine = entry.prompt
+      ? `<p class="journal-prompt">${escHtml(entry.prompt)}</p>`
+      : '';
+    return `
+      <div class="accordion-entry">
+        <button type="button" class="accordion-header" aria-expanded="false" onclick="toggleAccordion(this)">
+          <div class="accordion-meta">
+            <span class="accordion-date">${label}</span>
+            ${bookLine}
+          </div>
+          <span class="accordion-chevron">›</span>
+        </button>
+        <div class="accordion-body" hidden>
+          ${promptLine}
+          <p class="reflection-text">${escHtml(entry.text)}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-/* ── Disabled button ── */
-.spin-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; transform: none; }
+function toggleAccordion(btn) {
+  const body   = btn.nextElementSibling;
+  const isOpen = !body.hidden;
+  body.hidden  = isOpen;
+  btn.setAttribute('aria-expanded', String(!isOpen));
+  btn.classList.toggle('open', !isOpen);
+}
 
-/* ══════════════════════════════════════════
-   MOBILE
-══════════════════════════════════════════ */
-@media (max-width: 540px) {
-  .book-row-fields { grid-template-columns: 1fr; }
-  .oracle-intro-headline { font-size: 22px; }
-  .oracle-intro-sub { font-size: 17px; }
-  .oracle-question { font-size: 22px; }
-  .oracle-card { padding: 1.4rem 1.25rem 1.25rem; }
-  .landing-card, .confirm-card { padding: 1.75rem 1.25rem; }
-  .shelf-item { gap: 6px; }
-  .oracle-pull { font-size: 17px; }
-  .oracle-why { font-size: 14px; }
-  .time-pills { flex-wrap: wrap; }
+/* ═══════════════════════════════════════════
+   SESSION LOG
+   Streak logic: null = first ever (1),
+   yesterday = consecutive (++), else reset (1).
+   Sessions count every oracle query.
+   Minutes use selectedMins (10/20/30).
+═══════════════════════════════════════════ */
+function logSession(data) {
+  const now = new Date();
+  const td  = today();
+
+  if (appState.lastDate !== td) {
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    const yStr = yest.toISOString().split('T')[0];
+    if (appState.lastDate === null) {
+      appState.streak = 1;
+    } else if (appState.lastDate === yStr) {
+      appState.streak++;
+    } else {
+      appState.streak = 1;
+    }
+    appState.lastDate = td;
+  }
+
+  appState.sessions++;              /* Every "Find my chapter" press */
+  appState.mins += selectedMins;    /* Uses the selected reading time */
+
+  appState.log.unshift({
+    date:    now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    time:    now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+    title:   data.title,
+    author:  data.author,
+    pageRef: data.pageRef,
+    marked:  false
+  });
+  if (appState.log.length > 30) appState.log.pop();
+  saveState();
+}
+
+/* ═══════════════════════════════════════════
+   STATS
+═══════════════════════════════════════════ */
+function renderStats() {
+  const streak = document.getElementById('s-streak');
+  const sess   = document.getElementById('s-sess');
+  const mins   = document.getElementById('s-mins');
+  if (streak) streak.textContent = appState.streak   || 0;
+  if (sess)   sess.textContent   = appState.sessions || 0;
+  if (mins)   mins.textContent   = appState.mins     || 0;
+}
+
+/* ═══════════════════════════════════════════
+   LOCAL STORAGE
+═══════════════════════════════════════════ */
+function loadLibrary() {
+  try { const raw = localStorage.getItem(LIBRARY_KEY); if (!raw) return null; return JSON.parse(raw); }
+  catch (_) { return null; }
+}
+
+function saveLibrary(books) {
+  const lib = { version: 2, createdAt: (library && library.createdAt) ? library.createdAt : today(), books };
+  localStorage.setItem(LIBRARY_KEY, JSON.stringify(lib));
+  library = lib;
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    const def = { streak: 0, sessions: 0, mins: 0, lastDate: null, markedDates: [], log: [], reflections: {} };
+    return raw ? Object.assign(def, JSON.parse(raw)) : def;
+  } catch (_) {
+    return { streak: 0, sessions: 0, mins: 0, lastDate: null, markedDates: [], log: [], reflections: {} };
+  }
+}
+
+function saveState() { localStorage.setItem(STATE_KEY, JSON.stringify(appState)); }
+
+/* ═══════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════ */
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatLabel(fmt) {
+  const map = { print: '📖 Print', audio: '🎧 Audio', ebook: '📱 eBook' };
+  return map[fmt] || '📖 Print';
 }
