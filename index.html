@@ -33,9 +33,9 @@
       <p class="landing-sub">Tell us what you're carrying. We'll find your chapter.</p>
       <button type="button" class="spin-btn" id="landing-cta">Find my chapter →</button>
       <p class="landing-micro">No account needed · Uses only the books you own</p>
-      <div class="or-divider" aria-hidden="true">or</div>
-      <button type="button" class="sample-shelf-cta" id="sample-shelf-cta">Try it with a sample shelf</button>
-      <p class="landing-micro" style="margin-top:0.6rem">Experience the oracle instantly · Add your own books anytime</p>
+      <div class="landing-divider">or</div>
+      <button type="button" class="sample-btn" id="sample-cta">Try it with a sample shelf</button>
+      <p class="landing-micro">Experience the oracle instantly — no setup required</p>
     </div>
   </div>
 
@@ -77,7 +77,9 @@
 
   <!-- ══════════════════════════════════════
        SCREEN: ORACLE INTAKE
-       V1-style intro above the input card
+       V1-style: intro above the card,
+       time selector inside the card,
+       mic button in the textarea
   ══════════════════════════════════════ -->
   <div class="screen" id="screen-oracle" style="display:none">
     <header class="rr-head">
@@ -85,16 +87,23 @@
       <p id="oracle-shelf-label">The right chapter, right now.</p>
     </header>
 
-    <!-- V1-style intro — the emotional hook above the card -->
+    <!-- Sample mode banner -->
+    <div class="sample-banner" id="sample-banner" style="display:none">
+      <span>You're using the sample shelf.</span>
+      <button type="button" class="sample-banner-link" id="sample-add-shelf-btn">Add your own books →</button>
+    </div>
+
+    <!-- V1-style emotional intro above the card -->
     <div class="oracle-intro">
       <p class="oracle-intro-headline">There is a chapter that was written for this moment.</p>
       <p class="oracle-intro-sub">Not for everyone. For you. For today.</p>
       <p class="oracle-intro-copy">Type or speak what you are carrying right now.<br>The right chapter will appear.</p>
     </div>
 
-    <!-- Input card -->
+    <!-- Oracle input card -->
     <div class="oracle-card">
       <p class="oracle-question">What are you carrying right now?</p>
+
       <div class="oracle-input-wrap">
         <textarea
           id="oracle-input"
@@ -102,15 +111,31 @@
           aria-label="What you are carrying"
           maxlength="500"
         ></textarea>
+        <!-- Mic button injected here by JS if Web Speech API is supported -->
         <span class="char-count" id="char-count"></span>
       </div>
+
+      <!-- Time selector -->
+      <div class="time-selector">
+        <div class="time-label-row">
+          <span class="time-label">How long do you have to read?</span>
+        </div>
+        <div class="time-pills" id="time-pills">
+          <button type="button" class="time-pill on" data-mins="10">10 min</button>
+          <button type="button" class="time-pill" data-mins="20">20 min</button>
+          <button type="button" class="time-pill" data-mins="30">30 min</button>
+        </div>
+      </div>
+
       <button type="button" class="spin-btn" id="oracle-submit-btn" disabled>Find my chapter →</button>
+
       <button type="button" class="text-link shelf-link" id="oracle-edit-shelf-btn">
         My shelf (<span id="oracle-shelf-count">0</span> books)
       </button>
     </div>
 
-    <div class="stats-row" id="oracle-stats" aria-label="Reading stats" style="display:none">
+    <!-- Stats row — always visible when oracle screen is active -->
+    <div class="stats-row" id="oracle-stats" aria-label="Reading stats">
       <div class="stat">
         <div class="stat-n" id="s-streak">0</div>
         <div class="stat-l">Day streak</div>
@@ -141,17 +166,18 @@
   </div>
 
   <!-- ══════════════════════════════════════
-       SCREEN: REVEAL CARD
-       Structure (top to bottom):
-       1. oracle-speaks-card  — the 3-part oracle message
+       SCREEN: REVEAL
+       Order (top to bottom):
+       1. oracle-speaks-card  — pull quote + body text
        2. result-card         — book title, author, badges
        3. page-box            — big page number
-       4. rev-page-note       — "Around page X, you'll find…"
-       5. after-reading-card  — specific actionable nudge
-       6. mark read + ask again buttons
-       7. reflection section  — custom prompt + textarea
-       8. what's next buttons
-       9. sample prompt (sample mode only)
+       4. oracle-why          — "Around page X, you'll find…"
+       5. oracle-step-block   — "After reading" nudge
+       6. mark read + ask again
+       7. sample upgrade (sample mode only)
+       8. reflection (custom prompt + textarea)
+       9. journal accordion
+       10. what's next
   ══════════════════════════════════════ -->
   <div class="screen" id="screen-reveal" style="display:none">
     <header class="rr-head">
@@ -159,77 +185,84 @@
       <p>The oracle speaks</p>
     </header>
 
-    <!-- 1. Oracle message — its own card, comes FIRST -->
+    <!-- 1. Oracle message — split into pull quote + body -->
     <section class="oracle-speaks-card" aria-live="polite">
       <div class="oracle-label">✦ &nbsp;The oracle speaks</div>
-      <div class="oracle-message" id="rev-oracle-msg"></div>
+      <div id="rev-oracle-msg"></div>
     </section>
 
-    <!-- 2. Book reveal card — title, author, format badge -->
+    <!-- 2. Book reveal card -->
     <section class="result-card visible" id="reveal-card">
       <div class="book-title" id="rev-title"></div>
       <div class="book-author" id="rev-author"></div>
-      <div class="badges" id="rev-badges">
+      <div class="badges">
         <span class="badge b-format" id="rev-format-badge"></span>
+        <span class="badge b-time" id="rev-time-badge"></span>
         <span class="badge b-done" id="rev-done" style="display:none">Marked read today ✓</span>
       </div>
     </section>
 
-    <!-- 3. Page box — stands alone as its own card -->
+    <!-- 3. Page box — standalone card -->
     <div class="page-box">
       <div class="page-num" id="rev-page"></div>
-      <div class="page-sub" id="rev-page-sub">Suggested starting point</div>
+      <div class="page-sub">Suggested starting point</div>
     </div>
 
-    <!-- 4. Page note — italic explanation of WHY that page -->
-    <div class="rev-page-note" id="rev-page-note" style="display:none"></div>
+    <!-- 4. Why this page — italic with left border -->
+    <p class="oracle-why" id="rev-page-why"></p>
 
-    <!-- 5. After reading card — specific actionable nudge -->
-    <div class="after-reading-card" id="rev-after-reading" style="display:none">
-      <div class="after-reading-label">After reading</div>
-      <div class="after-reading-text" id="rev-after-reading-text"></div>
+    <!-- 5. After reading nudge -->
+    <div class="oracle-step-block" id="rev-after-reading-block" style="display:none">
+      <div class="oracle-step-label">After reading</div>
+      <div class="oracle-step" id="rev-after-reading"></div>
     </div>
 
-    <!-- 6. Primary action buttons -->
-    <div class="btn-row" style="margin-bottom: 0.5rem">
-      <button type="button" class="rr-btn mark-btn" id="rev-mark-btn">Mark read today</button>
-      <button type="button" class="rr-btn" id="ask-again-btn">Ask again</button>
-    </div>
-
-    <!-- Audible link — only shown for audio format -->
+    <!-- Audible link (audio format only) -->
     <a class="audible-link" id="rev-audible" href="#" target="_blank" rel="noopener" style="display:none">
       Listen on Audible →
     </a>
 
-    <div class="divider" aria-hidden="true"><span>reflection</span></div>
+    <!-- 6. Primary action buttons -->
+    <div class="btn-row">
+      <button type="button" class="rr-btn mark-btn" id="rev-mark-btn">Mark read today</button>
+      <button type="button" class="rr-btn" id="ask-again-btn">Ask again</button>
+    </div>
 
-    <!-- 7. Reflection section — custom prompt per session -->
+    <!-- 7. Sample mode upgrade prompt -->
+    <div class="sample-upgrade" id="sample-upgrade" style="display:none">
+      <p class="sample-upgrade-text">Want the oracle to use <em>your</em> books?</p>
+      <button type="button" class="spin-btn" id="sample-upgrade-btn">Add my own shelf →</button>
+      <p class="landing-micro">Your session data will be kept</p>
+    </div>
+
+    <!-- 8. Reflection section -->
+    <div class="divider" aria-hidden="true"><span>reflection</span></div>
     <section class="reflect-card" aria-label="Reflection">
-      <div class="card-head" id="r-prompt">What does this bring up for you?</div>
-      <textarea id="r-text" placeholder="Write a few thoughts after your session…" aria-label="Reflection notes"></textarea>
+      <div class="card-head" id="rev-reflection-prompt">What does this bring up for you?</div>
+      <div class="oracle-input-wrap">
+        <textarea id="r-text" placeholder="Write a few thoughts after your session…" aria-label="Reflection notes"></textarea>
+        <!-- Mic button for reflection also injected by JS -->
+      </div>
       <div style="display:flex;align-items:center;gap:12px;">
         <button type="button" class="save-btn" id="save-reflect-btn">Save reflection</button>
         <span class="saved-ok" id="saved-ok" aria-live="polite" style="display:none">Saved ✓</span>
       </div>
     </section>
 
-    <div class="divider" aria-hidden="true"><span>what's next</span></div>
+    <!-- 9. Journal accordion -->
+    <div class="divider" aria-hidden="true"><span>journal</span></div>
+    <section class="log-card" aria-label="Reflection journal">
+      <div class="card-head">Your reflections</div>
+      <div id="journal-list">
+        <p class="log-empty">No reflections yet. Save one above after your session.</p>
+      </div>
+    </section>
 
-    <!-- 8. Secondary nav buttons -->
+    <!-- 10. What's next -->
+    <div class="divider" aria-hidden="true"><span>what's next</span></div>
     <div class="btn-row">
       <button type="button" class="rr-btn" id="reveal-edit-shelf-btn">Edit my shelf</button>
     </div>
-
-    <!-- 9. Sample mode prompt — hidden unless isSampleMode === true -->
-    <div id="sample-shelf-prompt" style="display:none">
-      <div class="divider" aria-hidden="true"><span>make it yours</span></div>
-      <div class="sample-prompt-card">
-        <p class="sample-prompt-text">Want this to use your own books?</p>
-        <p class="sample-prompt-sub">The oracle works best when it knows your shelf. Add your books and every session gets personal to you.</p>
-        <button type="button" class="spin-btn" id="build-my-shelf-btn">Add your shelf →</button>
-      </div>
-    </div>
-
   </div>
 
   <!-- ══════════════════════════════════════
@@ -255,7 +288,7 @@
 
 </main>
 
-<script src="script.js"></script>
+<script src="script.js?v=5"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
