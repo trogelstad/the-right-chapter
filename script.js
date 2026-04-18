@@ -60,6 +60,47 @@ let selectedMins         = 10;
 let currentSessionMarked = false;
 
 /* ═══════════════════════════════════════════
+   THEME TOGGLE
+   Reads saved preference from localStorage.
+   Falls back to OS preference if none saved.
+   Saves choice so it persists across sessions.
+═══════════════════════════════════════════ */
+function initTheme() {
+  const saved = localStorage.getItem('trc_theme'); /* 'light' | 'dark' | null */
+  const btn   = document.getElementById('theme-toggle');
+
+  function applyTheme(mode) {
+    document.documentElement.classList.remove('force-light', 'force-dark');
+    if (mode === 'light') {
+      document.documentElement.classList.add('force-light');
+      if (btn) btn.textContent = '🌙';
+    } else if (mode === 'dark') {
+      document.documentElement.classList.add('force-dark');
+      if (btn) btn.textContent = '☀️';
+    } else {
+      /* No preference saved — follow OS, set icon based on current appearance */
+      const osDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (btn) btn.textContent = osDark ? '☀️' : '🌙';
+    }
+  }
+
+  applyTheme(saved);
+
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.contains('force-dark')
+        || (!document.documentElement.classList.contains('force-light')
+            && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+      const next = isDark ? 'light' : 'dark';
+      localStorage.setItem('trc_theme', next);
+      applyTheme(next);
+      track('theme_toggle', { mode: next });
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════
    SCREEN ROUTER
 ═══════════════════════════════════════════ */
 function showScreen(id) {
@@ -74,6 +115,7 @@ function showScreen(id) {
 document.addEventListener('DOMContentLoaded', () => {
   library  = loadLibrary();
   appState = loadState();
+  initTheme();
   wireButtons();
   initVoiceInput('oracle-input');
   initVoiceInput('r-text');
