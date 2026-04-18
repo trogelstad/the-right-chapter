@@ -3535,3 +3535,70 @@ textarea::placeholder { color: var(--ink-4); }
   .oracle-why { font-size: 14px; }
   .time-pills { flex-wrap: wrap; }
 }
+/* ── Journal inline edit form ── */
+.journal-edit-wrap {
+  margin-top: 0.75rem;
+}
+
+.journal-edit-textarea {
+  width: 100%;
+  min-height: 90px;
+  border: 1px solid var(--line-focus);
+  border-radius: var(--r-md);
+  padding: 11px 13px;
+  font-size: 14px;
+  font-family: var(--sans);
+  font-weight: 300;
+  color: var(--ink);
+  background: var(--inset);
+  resize: vertical;
+  line-height: 1.7;
+  box-shadow: 0 0 0 3px rgba(123,114,200,0.10),
+              inset 0 1px 4px rgba(45,30,10,0.06);
+  margin-bottom: 0.6rem;
+}
+
+.journal-edit-btns {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* "Edit entry" text link at the bottom of each entry */
+.journal-edit-btn {
+  display: inline-block;
+  margin-top: 0.65rem;
+  font-size: 12px;
+  color: var(--ink-4);
+  font-family: var(--sans);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+  transition: color 0.14s;
+  padding: 0;
+}
+
+.journal-edit-btn:hover {
+  color: var(--plum);
+  text-decoration-color: var(--plum-ring);
+}
+
+/* "Cancel" link inside the edit form */
+.journal-cancel-btn {
+  font-size: 13px;
+  color: var(--ink-3);
+  font-family: var(--sans);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--line-med);
+  text-underline-offset: 3px;
+  transition: color 0.14s;
+  padding: 0;
+}
+
+.journal-cancel-btn:hover { color: var(--ink); }
