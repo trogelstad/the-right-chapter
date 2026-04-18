@@ -647,7 +647,7 @@ function shareReveal(channel) {
   const title   = currentReveal ? currentReveal.title   : 'a book on my shelf';
   const pageRef = currentReveal ? currentReveal.pageRef : '';
   const page    = pageRef ? ` · ${pageRef}` : '';
-  const text    = `The oracle sent me to ${title}${page}. Exactly what I needed today. therightchapter.com`;
+  const text    = `The Right Chapter Found the perfect inspiration for me today! ${title}${page}. Exactly what I needed today. therightchapter.com`;
   const url     = 'https://therightchapter.com';
 
   track('share', { channel, book_title: title });
