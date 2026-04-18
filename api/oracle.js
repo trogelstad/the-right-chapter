@@ -1,11 +1,7 @@
 /* ═══════════════════════════════════════════
    The Right Chapter — api/oracle.js
    Vercel serverless function
-
-   CRITICAL: Uses module.exports — NOT export default.
-   Vercel Node.js requires CommonJS syntax.
-
-   Env var required: ANTHROPIC_API_KEY
+   MUST use module.exports — NOT export default
 ═══════════════════════════════════════════ */
 
 module.exports = async function handler(req, res) {
@@ -33,52 +29,45 @@ ${bookList}
 WHAT THEY ARE CARRYING:
 "${input}"
 
-You must return a JSON object with these 7 fields. Every field is required.
+You will return six fields. Each one matters. Do them all with care.
 
-FIELD 1 — title
-The exact book title from the shelf.
+FIELD 1 — oracleMessage:
+Three parts written as one flowing block of prose, no headers, no labels, no line breaks between parts.
+Part one (3-4 sentences): Read beneath the surface. Name what is actually happening emotionally — not a summary, a deeper reading. Be specific and human. Sound like someone who has lived through something similar.
+Part two (2-3 sentences): Connect their exact emotional state to why this specific book meets this moment. Make it feel inevitable — like of course it is this book, right now.
+Part three (2 sentences): Tell them how to approach the reading — slowly, twice, out loud, whatever fits the mood.
 
-FIELD 2 — author
-The exact author name from the shelf.
+FIELD 2 — summary:
+One crisp sentence. A distillation of what this reading offers right now. Should feel like the caption beneath the experience. Example: "This is about learning to hold your love without trying to carry his journey."
 
-FIELD 3 — format
-"print" or "audio" or "ebook" — match what is listed for that book.
+FIELD 3 — pageRef:
+A specific page number always. You know the approximate length of most published books — use that knowledge. Never say "the first third" or "somewhere in the middle." Say "Page 87" or "Around page 112." Use emotional judgment: grief and endings open in the final third, restlessness opens in the middle, new beginnings open in the first third.
 
-FIELD 4 — oracleMessage
-A three-part oracle message written as one flowing block of prose. No headers, no labels, no line breaks between parts. The three parts are:
+FIELD 4 — pageWhy:
+2-3 sentences explaining why you chose this specific page or section. Be concrete — what will they find there? Why does it speak to what they are carrying right now? This should feel like the oracle explaining its reasoning, not a book description. Example: "Around page 117, you will find the chapter written for families — not the person drinking, but the people who love them. It does not promise you can fix this. It offers something rarer: a way to stay present without drowning."
 
-PART ONE — WHAT YOU SEE (3–4 sentences): Read beneath the surface of what they wrote. Name what is actually happening emotionally. Not a summary — a deeper reading. Be specific and human. Sound like someone who has lived through something similar.
+FIELD 5 — afterReading:
+A single specific action for after they read. Not generic. Tied directly to what they are carrying and what the book offers. Should feel like a wise instruction. Example: "After reading, write down one boundary you need to hold this week — not to punish him, but to protect your own ground."
 
-PART TWO — WHY THIS BOOK (2–3 sentences): Connect their exact emotional state to the specific quality of this book that meets this moment. Do not describe the book generically. Make the connection feel inevitable — like of course it is this book, right now.
+FIELD 6 — reflectionPrompt:
+A single question for their reflection journal. Specific to their situation and the book. Not "What does this bring up for you?" — that is too generic. Make it pointed and personal. Example: "Where in your life are you trying to fix something that was never yours to carry?"
 
-PART THREE — HOW TO ENTER (2 sentences): Tell them how to approach the reading. Something like: "Read slowly. Let the first sentence that lands, land." Make it feel like instruction from someone wise.
+PAGE REFERENCE RULES:
+- Always give a specific number. "Page 87" or "Around page 112" — never a range or a section name.
+- Never invent chapter titles or section names.
 
-FIELD 5 — pageRef
-A specific page number. You know the approximate page counts of most published books — use that knowledge. Never say "the first third" or "somewhere in the middle" — those phrases are forbidden. Use emotional judgment: grief and endings open in the final third, restlessness opens in the middle, new beginnings open in the first third. Format as "Page 47" or "Around page 112".
-
-FIELD 6 — pageNote
-2–3 sentences that explain what the reader will find at or around that page and why it speaks to this moment. This is NOT a repeat of the oracle message. This is practical and specific — it tells them what they are walking into on that page. Example: "Around page 117, you'll find the chapter written for families — not the person drinking, but the people who love them. It doesn't promise you can fix this. It offers something rarer: a way to stay present without drowning, to care without controlling."
-
-FIELD 7 — afterReading
-A single specific, actionable post-reading nudge. This should feel like a wise mentor giving them one concrete thing to do after they close the book. It must be directly tied to what they shared and what the book offers. Do NOT make it generic journaling. Examples of the right tone: "After reading, write down one boundary you need to hold this week — not to punish him, but to protect your own ground." or "After reading, name the one thing you have been waiting for permission to begin. You have it now." or "After reading, send the message you have been drafting in your head but not sending. Today is the day."
-
-FIELD 8 — reflectionPrompt
-A single custom reflection question, written specifically for this person's situation. It should NOT be generic like "What did this bring up for you?" It should be precise and personal — something that could only have been written for them, today, given what they shared. Examples: "What would it mean to stop carrying someone else's journey as if it were your own?" or "Where in your life are you still waiting for the floor to drop — and what if it doesn't?"
-
-FIELD 9 — summary
-One crisp sentence that distills what this reading offers right now. It should feel like the caption beneath the experience. Example: "This is permission to stop performing and start becoming."
-
-RESPONSE FORMAT — return valid JSON only. No markdown fences, no explanation, no preamble. Just this object:
+RESPONSE: Return valid JSON only. No markdown. No explanation. Just this object:
 {
   "title": "exact title from the shelf",
   "author": "exact author from the shelf",
   "format": "print or audio or ebook",
-  "oracleMessage": "Three-part oracle message as one flowing block of prose",
-  "pageRef": "Page 47",
-  "pageNote": "2-3 sentences about what they will find at that page and why",
-  "afterReading": "One specific actionable nudge tied to their situation",
-  "reflectionPrompt": "One custom reflection question written for this person",
-  "summary": "One crisp sentence distillation"
+  "oracleMessage": "three-part flowing prose",
+  "summary": "one crisp sentence",
+  "pageRef": "Page 87",
+  "pageRefType": "number",
+  "pageWhy": "2-3 sentences explaining why this page",
+  "afterReading": "one specific post-reading action",
+  "reflectionPrompt": "one pointed personal reflection question"
 }`;
 
   try {
@@ -91,14 +80,14 @@ RESPONSE FORMAT — return valid JSON only. No markdown fences, no explanation, 
       },
       body: JSON.stringify({
         model:      'claude-sonnet-4-5',
-        max_tokens: 1200,
+        max_tokens: 1400,
         messages:   [{ role: 'user', content: prompt }]
       })
     });
 
     if (!apiResponse.ok) {
       const errText = await apiResponse.text();
-      console.error('Anthropic API error:', errText);
+      console.error('Anthropic error:', errText);
       return res.status(500).json({ error: 'API error', detail: errText });
     }
 
@@ -111,12 +100,11 @@ RESPONSE FORMAT — return valid JSON only. No markdown fences, no explanation, 
       const cleaned = rawText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
       parsed = JSON.parse(cleaned);
     } catch (e) {
-      console.error('JSON parse failed. Raw was:', rawText);
+      console.error('Parse failed. Raw:', rawText);
       return res.status(500).json({ error: 'Parse error', raw: rawText });
     }
 
     if (!parsed.title || !parsed.oracleMessage || !parsed.pageRef) {
-      console.error('Incomplete oracle response:', parsed);
       return res.status(500).json({ error: 'Incomplete response', parsed });
     }
 
