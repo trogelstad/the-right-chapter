@@ -4,14 +4,11 @@
 ═══════════════════════════════════════════ */
 'use strict';
 
-/* ── Storage keys ── */
 const LIBRARY_KEY = 'trc_library';
 const STATE_KEY   = 'trc_state';
 
 /* ══════════════════════════════════════════
-   SAMPLE SHELF — curated starter library
-   Built from the founding 18-book collection.
-   Swap or expand this array anytime.
+   SAMPLE SHELF — 18-book curated starter
 ══════════════════════════════════════════ */
 const SAMPLE_SHELF = {
   version: 2,
@@ -38,17 +35,11 @@ const SAMPLE_SHELF = {
   ]
 };
 
-/* ── App state ── */
 let library          = null;
 let appState         = null;
 let editReturnScreen = 'screen-oracle';
 let lastOracleResult = null;
-
-/*
- * isSampleMode — true when user chose "Try it with a sample shelf".
- * Resets to false on page reload. Nothing written to localStorage while true.
- */
-let isSampleMode = false;
+let isSampleMode     = false;
 
 /* ═══════════════════════════════════════════
    SCREEN ROUTER
@@ -90,14 +81,10 @@ function wireButtons() {
     initShelfSetup([]);
     showScreen('screen-shelf-setup');
   });
-
-  /* SAMPLE SHELF CTA */
   document.getElementById('sample-shelf-cta').addEventListener('click', enterSampleMode);
 
   /* SHELF SETUP */
-  document.getElementById('add-book-btn').addEventListener('click', () => {
-    addBookRow('book-rows', onShelfRowChange);
-  });
+  document.getElementById('add-book-btn').addEventListener('click', () => addBookRow('book-rows', onShelfRowChange));
 
   document.getElementById('shelf-confirm-btn').addEventListener('click', () => {
     const books = collectBooks('book-rows');
@@ -113,7 +100,6 @@ function wireButtons() {
     showStats(false);
     showScreen('screen-oracle');
   });
-
   document.getElementById('confirm-edit-btn').addEventListener('click', () => {
     editReturnScreen = 'screen-shelf-confirm';
     initEditShelf();
@@ -123,17 +109,16 @@ function wireButtons() {
   /* ORACLE INTAKE */
   document.getElementById('oracle-input').addEventListener('input', onOracleInputChange);
   document.getElementById('oracle-submit-btn').addEventListener('click', submitToOracle);
-
   document.getElementById('oracle-edit-shelf-btn').addEventListener('click', () => {
     editReturnScreen = 'screen-oracle';
     initEditShelf();
     showScreen('screen-edit-shelf');
   });
 
-  /* REVEAL CARD */
+  /* REVEAL — mark read */
   document.getElementById('rev-mark-btn').addEventListener('click', markRead);
-  document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
 
+  /* REVEAL — ask again (clears input, back to oracle) */
   document.getElementById('ask-again-btn').addEventListener('click', () => {
     document.getElementById('oracle-input').value    = '';
     document.getElementById('char-count').textContent = '';
@@ -142,11 +127,7 @@ function wireButtons() {
     showScreen('screen-oracle');
   });
 
-  /*
-   * "Edit my shelf" on the reveal screen:
-   * — sample mode → exits sample mode, goes to shelf setup
-   * — normal mode → opens edit shelf screen
-   */
+  /* REVEAL — edit/build shelf */
   document.getElementById('reveal-edit-shelf-btn').addEventListener('click', () => {
     if (isSampleMode) {
       exitSampleMode();
@@ -157,14 +138,14 @@ function wireButtons() {
     }
   });
 
-  /* SAMPLE PROMPT — "Add your shelf →" */
+  /* REVEAL — reflection save */
+  document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
+
+  /* SAMPLE PROMPT */
   document.getElementById('build-my-shelf-btn').addEventListener('click', exitSampleMode);
 
   /* EDIT SHELF */
-  document.getElementById('edit-add-book-btn').addEventListener('click', () => {
-    addBookRow('edit-book-rows', onEditRowChange);
-  });
-
+  document.getElementById('edit-add-book-btn').addEventListener('click', () => addBookRow('edit-book-rows', onEditRowChange));
   document.getElementById('edit-save-btn').addEventListener('click', () => {
     const books = collectBooks('edit-book-rows');
     if (books.length < 3) return;
@@ -173,10 +154,7 @@ function wireButtons() {
     updateOracleShelfLabel();
     showScreen(editReturnScreen);
   });
-
-  document.getElementById('edit-cancel-btn').addEventListener('click', () => {
-    showScreen(editReturnScreen);
-  });
+  document.getElementById('edit-cancel-btn').addEventListener('click', () => showScreen(editReturnScreen));
 }
 
 /* ═══════════════════════════════════════════
@@ -204,14 +182,8 @@ async function submitToOracle() {
   const input = document.getElementById('oracle-input').value.trim();
   if (input.length < 5) return;
 
-  const books = isSampleMode
-    ? SAMPLE_SHELF.books
-    : (loadLibrary()?.books || []);
-
-  if (!books || !books.length) {
-    showScreen('screen-shelf-setup');
-    return;
-  }
+  const books = isSampleMode ? SAMPLE_SHELF.books : (loadLibrary()?.books || []);
+  if (!books || !books.length) { showScreen('screen-shelf-setup'); return; }
 
   showScreen('screen-loading');
   startLoadingMessages();
@@ -234,10 +206,7 @@ async function submitToOracle() {
 
     const data = await response.json();
     lastOracleResult = data;
-
-    /* Don't log stats for sample sessions */
     if (!isSampleMode) { logSession(data); }
-
     renderReveal(data);
 
   } catch (err) {
@@ -270,7 +239,6 @@ function addBookRow(containerId, onChange, prefill = {}) {
   const row = document.createElement('div');
   row.className = 'book-row';
   const fmt = prefill.format || 'print';
-
   row.innerHTML = `
     <div class="book-row-fields">
       <input type="text" class="book-title-input" placeholder="Book title"
@@ -287,14 +255,12 @@ function addBookRow(containerId, onChange, prefill = {}) {
       <button type="button" class="remove-book-btn" aria-label="Remove book">×</button>
     </div>
   `;
-
   row.querySelectorAll('.fmt-pill').forEach(btn => {
     btn.addEventListener('click', () => {
       row.querySelectorAll('.fmt-pill').forEach(p => p.classList.remove('on'));
       btn.classList.add('on');
     });
   });
-
   row.querySelector('.remove-book-btn').addEventListener('click', () => { row.remove(); onChange(); });
   row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', onChange));
   container.appendChild(row);
@@ -390,15 +356,15 @@ function updateOracleShelfLabel() {
 
   if (isSampleMode) {
     const count = SAMPLE_SHELF.books.length;
-    if (countEl) countEl.textContent  = count;
-    if (labelEl) labelEl.textContent  = `Sample shelf · ${count} books`;
-    if (editBtn) editBtn.style.display = 'none';
+    if (countEl) countEl.textContent   = count;
+    if (labelEl) labelEl.textContent   = `Sample shelf · ${count} books`;
+    if (editBtn) editBtn.style.display  = 'none';
   } else {
     const lib   = loadLibrary();
     const count = (lib && lib.books) ? lib.books.length : 0;
-    if (countEl) countEl.textContent  = count;
-    if (labelEl) labelEl.textContent  = `Your shelf · ${count} book${count !== 1 ? 's' : ''}`;
-    if (editBtn) editBtn.style.display = '';
+    if (countEl) countEl.textContent   = count;
+    if (labelEl) labelEl.textContent   = 'The right chapter, right now.';
+    if (editBtn) editBtn.style.display  = '';
   }
 }
 
@@ -433,36 +399,50 @@ function stopLoadingMessages() {
 
 /* ═══════════════════════════════════════════
    REVEAL CARD
+   Populates all 9 oracle fields:
+   oracleMessage, title, author, format,
+   pageRef, pageNote, afterReading,
+   reflectionPrompt, summary
 ═══════════════════════════════════════════ */
 function renderReveal(data) {
-  /* Oracle message — goes into oracle-speaks-card */
+  /* 1. Oracle message */
   document.getElementById('rev-oracle-msg').textContent = data.oracleMessage || '';
 
-  /* Book */
+  /* 2. Book */
   document.getElementById('rev-title').textContent  = data.title  || '';
   document.getElementById('rev-author').textContent = data.author || '';
 
-  /* Page reference — always rendered in full display style, no if/else */
-  const pageEl    = document.getElementById('rev-page');
-  const pageSubEl = document.getElementById('rev-page-sub');
-  pageEl.style.fontSize  = '';
-  pageEl.style.fontStyle = '';
-  pageEl.textContent     = data.pageRef || '';
-  pageSubEl.textContent  = 'open to this page and begin';
-
-  /* Summary — one sentence below the page number */
-  const summaryEl = document.getElementById('rev-summary');
-  if (summaryEl) {
-    summaryEl.textContent  = data.summary || '';
-    summaryEl.style.display = data.summary ? 'block' : 'none';
-  }
-
-  /* Format badge */
+  /* 3. Format badge */
   const badgeEl = document.getElementById('rev-format-badge');
   badgeEl.textContent = formatLabel(data.format);
   badgeEl.className   = `badge b-format-${data.format || 'print'}`;
 
-  /* Audible link */
+  /* 4. Page reference */
+  document.getElementById('rev-page').textContent     = data.pageRef || '';
+  document.getElementById('rev-page-sub').textContent = 'Suggested starting point';
+
+  /* 5. Page note — "Around page X, you'll find…" */
+  const pageNoteEl = document.getElementById('rev-page-note');
+  if (pageNoteEl) {
+    pageNoteEl.textContent  = data.pageNote || '';
+    pageNoteEl.style.display = data.pageNote ? 'block' : 'none';
+  }
+
+  /* 6. After reading card */
+  const afterReadingEl     = document.getElementById('rev-after-reading');
+  const afterReadingTextEl = document.getElementById('rev-after-reading-text');
+  if (afterReadingEl && afterReadingTextEl) {
+    afterReadingTextEl.textContent = data.afterReading || '';
+    afterReadingEl.style.display   = data.afterReading ? 'block' : 'none';
+  }
+
+  /* 7. Custom reflection prompt — replaces the generic card-head */
+  const promptEl = document.getElementById('r-prompt');
+  if (promptEl) {
+    promptEl.textContent = data.reflectionPrompt || 'What does this bring up for you?';
+  }
+
+  /* 8. Audible link */
   const audibleEl = document.getElementById('rev-audible');
   if (data.format === 'audio') {
     const q = encodeURIComponent((data.title || '') + ' ' + (data.author || ''));
@@ -472,7 +452,7 @@ function renderReveal(data) {
     audibleEl.style.display = 'none';
   }
 
-  /* Mark read state */
+  /* 9. Mark read state */
   const markBtn = document.getElementById('rev-mark-btn');
   const doneEl  = document.getElementById('rev-done');
   if (appState.markedDates && appState.markedDates.includes(today())) {
@@ -485,10 +465,11 @@ function renderReveal(data) {
     doneEl.style.display = 'none';
   }
 
+  /* Clear reflection */
   document.getElementById('r-text').value          = '';
   document.getElementById('saved-ok').style.display = 'none';
 
-  /* Sample mode UI */
+  /* Sample mode UI adjustments */
   const samplePrompt = document.getElementById('sample-shelf-prompt');
   const editShelfBtn = document.getElementById('reveal-edit-shelf-btn');
   if (isSampleMode) {
@@ -537,8 +518,9 @@ function saveReflect() {
 
 /* ═══════════════════════════════════════════
    SESSION LOG — streak fixed
-   null check on first session, consecutive day
-   increment, reset on missed day.
+   null → first ever session (streak = 1)
+   yesterday → consecutive (streak++)
+   other → missed day (reset to 1)
 ═══════════════════════════════════════════ */
 function logSession(data) {
   const now = new Date();
@@ -548,15 +530,11 @@ function logSession(data) {
     const yest = new Date();
     yest.setDate(yest.getDate() - 1);
     const yStr = yest.toISOString().split('T')[0];
-
     if (appState.lastDate === null) {
-      /* Very first session ever */
       appState.streak = 1;
     } else if (appState.lastDate === yStr) {
-      /* Consecutive day — increment */
       appState.streak++;
     } else {
-      /* Missed a day — reset */
       appState.streak = 1;
     }
     appState.lastDate = td;
@@ -564,7 +542,6 @@ function logSession(data) {
 
   appState.sessions++;
   appState.mins += 10;
-
   appState.log.unshift({
     date:    now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     time:    now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
@@ -573,7 +550,6 @@ function logSession(data) {
     pageRef: data.pageRef,
     marked:  false
   });
-
   if (appState.log.length > 30) appState.log.pop();
   saveState();
 }
@@ -602,34 +578,29 @@ function loadLibrary() {
   try { const raw = localStorage.getItem(LIBRARY_KEY); if (!raw) return null; return JSON.parse(raw); }
   catch (_) { return null; }
 }
-
 function saveLibrary(books) {
   const lib = { version: 2, createdAt: (library && library.createdAt) ? library.createdAt : today(), books };
   localStorage.setItem(LIBRARY_KEY, JSON.stringify(lib));
   library = lib;
 }
-
 function loadState() {
   try {
-    const raw      = localStorage.getItem(STATE_KEY);
-    const defaults = { streak: 0, sessions: 0, mins: 0, lastDate: null, markedDates: [], log: [], reflections: {} };
-    return raw ? Object.assign(defaults, JSON.parse(raw)) : defaults;
+    const raw = localStorage.getItem(STATE_KEY);
+    const def = { streak: 0, sessions: 0, mins: 0, lastDate: null, markedDates: [], log: [], reflections: {} };
+    return raw ? Object.assign(def, JSON.parse(raw)) : def;
   } catch (_) {
     return { streak: 0, sessions: 0, mins: 0, lastDate: null, markedDates: [], log: [], reflections: {} };
   }
 }
-
 function saveState() { localStorage.setItem(STATE_KEY, JSON.stringify(appState)); }
 
 /* ═══════════════════════════════════════════
    HELPERS
 ═══════════════════════════════════════════ */
 function today() { return new Date().toISOString().split('T')[0]; }
-
 function escHtml(str) {
-  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 function formatLabel(fmt) {
   const map = { print: '📖 Print', audio: '🎧 Audio', ebook: '📱 eBook' };
   return map[fmt] || '📖 Print';
