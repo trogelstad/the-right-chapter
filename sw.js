@@ -1,6 +1,6 @@
-/* The Right Chapter — sw.js (service worker) */
+/* The Right Chapter — sw.js */
 
-const CACHE = 'trc-v7';
+const CACHE = 'trc-v2';
 const ASSETS = ['/', '/index.html', '/style.css', '/script.js', '/manifest.json'];
 
 self.addEventListener('install', e => {
@@ -18,6 +18,11 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  /* Never cache API calls */
+  if (e.request.url.includes('/api/')) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
