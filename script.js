@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════
    The Right Chapter — script.js  v5
    All features: time selector, voice-to-text,
-   sample mode, journal accordion, fixed streak
+   sample mode, journal accordion, fixed streak,
+   full analytics tracking
 ═══════════════════════════════════════════ */
 'use strict';
 
@@ -10,37 +11,48 @@ const STATE_KEY   = 'trc_state';
 
 /* ══════════════════════════════════════════
    SAMPLE SHELF — 18-book curated starter
-   Swap or expand this array anytime.
 ══════════════════════════════════════════ */
 const SAMPLE_SHELF = [
-  { id: 'sample-01', title: 'Daily Reflections',                author: 'Alcoholics Anonymous', format: 'print', pages: 400, addedAt: 'sample' },
-  { id: 'sample-02', title: 'The Four Agreements',              author: 'Don Miguel Ruiz',       format: 'print', pages: 160, addedAt: 'sample' },
-  { id: 'sample-03', title: 'The Alchemist',                    author: 'Paulo Coelho',          format: 'print', pages: 208, addedAt: 'sample' },
-  { id: 'sample-04', title: 'Alcoholics Anonymous',             author: 'Alcoholics Anonymous', format: 'print', pages: 575, addedAt: 'sample' },
-  { id: 'sample-05', title: 'Becoming Supernatural',            author: 'Dr. Joe Dispenza',      format: 'print', pages: 380, addedAt: 'sample' },
-  { id: 'sample-06', title: 'Alcohol Explained',                author: 'William Porter',        format: 'print', pages: 200, addedAt: 'sample' },
-  { id: 'sample-07', title: 'This Naked Mind',                  author: 'Annie Grace',           format: 'print', pages: 260, addedAt: 'sample' },
-  { id: 'sample-08', title: 'Quit Drinking Without Willpower',  author: 'Allen Carr',            format: 'print', pages: 288, addedAt: 'sample' },
-  { id: 'sample-09', title: 'Quantum Success',                  author: 'Sandra Anne Taylor',    format: 'print', pages: 256, addedAt: 'sample' },
+  { id: 'sample-01', title: 'Daily Reflections',                author: 'Alcoholics Anonymous', format: 'print', pages: 400,  addedAt: 'sample' },
+  { id: 'sample-02', title: 'The Four Agreements',              author: 'Don Miguel Ruiz',       format: 'print', pages: 160,  addedAt: 'sample' },
+  { id: 'sample-03', title: 'The Alchemist',                    author: 'Paulo Coelho',          format: 'print', pages: 208,  addedAt: 'sample' },
+  { id: 'sample-04', title: 'Alcoholics Anonymous',             author: 'Alcoholics Anonymous',  format: 'print', pages: 575,  addedAt: 'sample' },
+  { id: 'sample-05', title: 'Becoming Supernatural',            author: 'Dr. Joe Dispenza',      format: 'print', pages: 380,  addedAt: 'sample' },
+  { id: 'sample-06', title: 'Alcohol Explained',                author: 'William Porter',        format: 'print', pages: 200,  addedAt: 'sample' },
+  { id: 'sample-07', title: 'This Naked Mind',                  author: 'Annie Grace',           format: 'print', pages: 260,  addedAt: 'sample' },
+  { id: 'sample-08', title: 'Quit Drinking Without Willpower',  author: 'Allen Carr',            format: 'print', pages: 288,  addedAt: 'sample' },
+  { id: 'sample-09', title: 'Quantum Success',                  author: 'Sandra Anne Taylor',    format: 'print', pages: 256,  addedAt: 'sample' },
   { id: 'sample-10', title: 'Twelve Steps and Twelve Traditions', author: 'Alcoholics Anonymous', format: 'print', pages: 192, addedAt: 'sample' },
-  { id: 'sample-11', title: 'The Road Less Traveled',           author: 'M. Scott Peck',         format: 'print', pages: 316, addedAt: 'sample' },
-  { id: 'sample-12', title: 'Living Sober',                     author: 'Alcoholics Anonymous', format: 'print', pages: 120, addedAt: 'sample' },
-  { id: 'sample-13', title: 'The Automatic Millionaire',        author: 'David Bach',            format: 'print', pages: 240, addedAt: 'sample' },
-  { id: 'sample-14', title: 'The Energy of Money',              author: 'Maria Nemeth Ph.D.',    format: 'print', pages: 304, addedAt: 'sample' },
-  { id: 'sample-15', title: 'The Red Road to Wellbriety',       author: 'White Bison Inc.',      format: 'print', pages: 200, addedAt: 'sample' },
+  { id: 'sample-11', title: 'The Road Less Traveled',           author: 'M. Scott Peck',         format: 'print', pages: 316,  addedAt: 'sample' },
+  { id: 'sample-12', title: 'Living Sober',                     author: 'Alcoholics Anonymous',  format: 'print', pages: 120,  addedAt: 'sample' },
+  { id: 'sample-13', title: 'The Automatic Millionaire',        author: 'David Bach',            format: 'print', pages: 240,  addedAt: 'sample' },
+  { id: 'sample-14', title: 'The Energy of Money',              author: 'Maria Nemeth Ph.D.',    format: 'print', pages: 304,  addedAt: 'sample' },
+  { id: 'sample-15', title: 'The Red Road to Wellbriety',       author: 'White Bison Inc.',      format: 'print', pages: 200,  addedAt: 'sample' },
   { id: 'sample-16', title: 'The Holy Bible',                   author: 'Various',               format: 'print', pages: 1200, addedAt: 'sample' },
-  { id: 'sample-17', title: 'Atomic Habits',                    author: 'James Clear',           format: 'print', pages: 320, addedAt: 'sample' },
-  { id: 'sample-18', title: 'The Energy of Money',              author: 'Maria Nemeth Ph.D.',    format: 'print', pages: 304, addedAt: 'sample' },
+  { id: 'sample-17', title: 'Atomic Habits',                    author: 'James Clear',           format: 'print', pages: 320,  addedAt: 'sample' },
+  { id: 'sample-18', title: 'The Energy of Money',              author: 'Maria Nemeth Ph.D.',    format: 'print', pages: 304,  addedAt: 'sample' },
 ];
+
+/* ═══════════════════════════════════════════
+   ANALYTICS — dataLayer push helper
+   Sends events to GTM → GA4.
+   Fails silently if GTM isn't loaded.
+═══════════════════════════════════════════ */
+function track(eventName, params = {}) {
+  try {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: eventName, ...params });
+  } catch (_) { /* Never let tracking break the app */ }
+}
 
 /* ── App state ── */
 let library          = null;
 let appState         = null;
 let editReturnScreen = 'screen-oracle';
-let currentReveal        = null;   /* Tracks the current oracle result for journal */
-let isSampleMode         = false;  /* True when using sample shelf, no localStorage writes */
-let selectedMins         = 10;     /* Reading time selected by user — default 10 min */
-let currentSessionMarked = false;  /* Resets each new oracle result — allows marking each session */
+let currentReveal        = null;
+let isSampleMode         = false;
+let selectedMins         = 10;
+let currentSessionMarked = false;
 
 /* ═══════════════════════════════════════════
    SCREEN ROUTER
@@ -75,17 +87,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ═══════════════════════════════════════════
    VOICE-TO-TEXT (Web Speech API)
-   Desktop only — mobile OS keyboard has its
-   own built-in mic, no button needed there.
+   Desktop only — mobile OS keyboard handles mic.
    Stops after 4 seconds of silence.
 ═══════════════════════════════════════════ */
 function initVoiceInput(textareaId) {
-  /* ── Mobile detection — skip on phones/tablets, OS keyboard handles mic there ── */
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   if (isMobile) return;
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return; /* Browser doesn't support Speech API */
+  if (!SR) return;
 
   const textarea = document.getElementById(textareaId);
   if (!textarea) return;
@@ -93,7 +103,6 @@ function initVoiceInput(textareaId) {
   const wrap = textarea.closest('.oracle-input-wrap');
   if (!wrap) return;
 
-  /* Create the mic button */
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'mic-btn';
@@ -102,50 +111,44 @@ function initVoiceInput(textareaId) {
   wrap.appendChild(btn);
 
   const recognition = new SR();
-  recognition.continuous     = true;   /* Keep listening — we control stop via timer */
+  recognition.continuous     = true;
   recognition.interimResults = true;
   recognition.lang           = 'en-US';
 
-  let listening     = false;
-  let silenceTimer  = null;
-  const SILENCE_MS  = 4000; /* Stop after 4 seconds of silence */
+  let listening    = false;
+  let silenceTimer = null;
+  const SILENCE_MS = 4000;
 
   function resetSilenceTimer() {
     if (silenceTimer) clearTimeout(silenceTimer);
-    silenceTimer = setTimeout(() => {
-      if (listening) recognition.stop();
-    }, SILENCE_MS);
+    silenceTimer = setTimeout(() => { if (listening) recognition.stop(); }, SILENCE_MS);
   }
-
   function clearSilenceTimer() {
     if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
   }
 
   btn.addEventListener('click', () => {
     if (listening) { recognition.stop(); return; }
-    try { recognition.start(); } catch (e) { /* Already running */ }
+    try { recognition.start(); } catch (e) {}
   });
 
   recognition.onstart = () => {
     listening = true;
     btn.classList.add('listening');
     btn.setAttribute('aria-label', 'Stop recording');
-    resetSilenceTimer(); /* Begin 4-second countdown immediately */
+    resetSilenceTimer();
   };
-
   recognition.onend = () => {
     listening = false;
     btn.classList.remove('listening');
     btn.setAttribute('aria-label', 'Start voice input');
     clearSilenceTimer();
   };
-
   recognition.onerror = () => {
     listening = false;
     btn.classList.remove('listening');
     clearSilenceTimer();
   };
-
   recognition.onresult = e => {
     let transcript = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -153,7 +156,7 @@ function initVoiceInput(textareaId) {
     }
     textarea.value = transcript;
     textarea.dispatchEvent(new Event('input'));
-    resetSilenceTimer(); /* Reset the 4-second timer every time speech is detected */
+    resetSilenceTimer();
   };
 }
 
@@ -171,10 +174,13 @@ function wireButtons() {
 
   /* SHELF SETUP */
   document.getElementById('add-book-btn').addEventListener('click', () => addBookRow('book-rows', onShelfRowChange));
+
   document.getElementById('shelf-confirm-btn').addEventListener('click', () => {
-    const books = collectBooks('book-rows');
+    const books   = collectBooks('book-rows');
     if (books.length < 3) return;
+    const isFirst = !loadLibrary();
     saveLibrary(books);
+    if (isFirst) track('shelf_created', { book_count: books.length });
     renderShelfDisplay(books, 'shelf-display');
     showScreen('screen-shelf-confirm');
   });
@@ -216,11 +222,11 @@ function wireButtons() {
   /* REVEAL — mark read */
   document.getElementById('rev-mark-btn').addEventListener('click', markRead);
 
-  /* REVEAL — ask again: clears input, resets mark-read button, back to oracle */
+  /* REVEAL — ask again */
   document.getElementById('ask-again-btn').addEventListener('click', () => {
-    document.getElementById('oracle-input').value    = '';
-    document.getElementById('char-count').textContent = '';
-    /* Force-reset mark-read button for the new session */
+    track('ask_again', { book_title: currentReveal ? currentReveal.title : '' });
+    document.getElementById('oracle-input').value     = '';
+    document.getElementById('char-count').textContent  = '';
     const markBtn = document.getElementById('rev-mark-btn');
     const doneEl  = document.getElementById('rev-done');
     if (markBtn) { markBtn.textContent = 'Mark read today'; markBtn.classList.remove('done'); }
@@ -258,12 +264,14 @@ function wireButtons() {
 ═══════════════════════════════════════════ */
 function enterSampleMode() {
   isSampleMode = true;
+  track('sample_shelf_used');
   updateOracleShelfLabel();
   renderStats();
   showScreen('screen-oracle');
 }
 
 function exitSampleMode() {
+  track('upgrade_cta_clicked');
   isSampleMode = false;
   initShelfSetup([]);
   showScreen('screen-shelf-setup');
@@ -276,9 +284,14 @@ async function submitToOracle() {
   const input = document.getElementById('oracle-input').value.trim();
   if (input.length < 5) return;
 
-  /* Use sample shelf or personal shelf */
   const books = isSampleMode ? SAMPLE_SHELF : (loadLibrary()?.books || []);
   if (!books || !books.length) { showScreen('screen-shelf-setup'); return; }
+
+  /* Track every oracle query */
+  track('oracle_query', {
+    reading_time: selectedMins,
+    shelf_type:   isSampleMode ? 'sample' : 'personal'
+  });
 
   showScreen('screen-loading');
   startLoadingMessages();
@@ -301,9 +314,15 @@ async function submitToOracle() {
     const data = await response.json();
     currentReveal = data;
 
-    /* Always log sessions + minutes. logSession handles sample vs personal internally. */
-    logSession(data);
+    /* Track what the oracle matched */
+    track('oracle_result', {
+      book_title:  data.title   || '',
+      book_author: data.author  || '',
+      page_ref:    data.pageRef || '',
+      shelf_type:  isSampleMode ? 'sample' : 'personal'
+    });
 
+    logSession(data);
     renderReveal(data);
 
   } catch (err) {
@@ -384,10 +403,10 @@ function onShelfRowChange() { updateShelfProgress('book-rows', 'shelf-progress',
 function onEditRowChange()  { updateShelfProgress('edit-book-rows', 'edit-shelf-progress', 'edit-save-btn'); }
 
 function updateShelfProgress(containerId, progressId, btnId) {
-  const books     = collectBooks(containerId);
-  const count     = books.length;
+  const books      = collectBooks(containerId);
+  const count      = books.length;
   const progressEl = document.getElementById(progressId);
-  const btnEl     = document.getElementById(btnId);
+  const btnEl      = document.getElementById(btnId);
   if (count === 0) {
     progressEl.textContent = ''; progressEl.className = 'shelf-progress';
   } else if (count < 3) {
@@ -404,7 +423,7 @@ function updateShelfProgress(containerId, progressId, btnId) {
    EDIT SHELF
 ═══════════════════════════════════════════ */
 function initEditShelf() {
-  const lib = loadLibrary();
+  const lib       = loadLibrary();
   const container = document.getElementById('edit-book-rows');
   container.innerHTML = '';
   const books = (lib && lib.books) ? lib.books : [];
@@ -453,17 +472,17 @@ function updateOracleShelfLabel() {
   const banner  = document.getElementById('sample-banner');
 
   if (isSampleMode) {
-    if (labelEl) labelEl.textContent    = 'Sample shelf — try the oracle';
-    if (countEl) countEl.textContent    = SAMPLE_SHELF.length;
-    if (editBtn) editBtn.style.display  = 'none';
-    if (banner)  banner.style.display   = 'block';
+    if (labelEl) labelEl.textContent   = 'Sample shelf — try the oracle';
+    if (countEl) countEl.textContent   = SAMPLE_SHELF.length;
+    if (editBtn) editBtn.style.display = 'none';
+    if (banner)  banner.style.display  = 'block';
   } else {
     const lib   = loadLibrary();
     const count = (lib && lib.books) ? lib.books.length : 0;
-    if (labelEl) labelEl.textContent    = 'The right chapter, right now.';
-    if (countEl) countEl.textContent    = count;
-    if (editBtn) editBtn.style.display  = '';
-    if (banner)  banner.style.display   = 'none';
+    if (labelEl) labelEl.textContent   = 'The right chapter, right now.';
+    if (countEl) countEl.textContent   = count;
+    if (editBtn) editBtn.style.display = '';
+    if (banner)  banner.style.display  = 'none';
   }
 }
 
@@ -502,12 +521,8 @@ function stopLoadingMessages() {
 
 /* ═══════════════════════════════════════════
    REVEAL CARD
-   Splits oracleMessage into pull quote + body.
-   Populates pageWhy, afterReading, reflectionPrompt.
-   Mark-read always resets on new reveal.
 ═══════════════════════════════════════════ */
 function renderReveal(data) {
-  /* ── Oracle message — split into pull quote + body text ── */
   const fullMsg   = data.oracleMessage || '';
   const sentences = fullMsg.match(/[^.!?]+[.!?]+/g) || [fullMsg];
   const pullText  = sentences.slice(0, 2).join(' ').trim();
@@ -518,91 +533,83 @@ function renderReveal(data) {
       (bodyText ? `<p class="oracle-body">${escHtml(bodyText)}</p>` : '');
   }
 
-  /* ── Book ── */
   document.getElementById('rev-title').textContent  = data.title  || '';
   document.getElementById('rev-author').textContent = data.author || '';
 
-  /* ── Format badge ── */
   const badgeEl = document.getElementById('rev-format-badge');
   badgeEl.textContent = formatLabel(data.format);
   badgeEl.className   = `badge b-format-${data.format || 'print'}`;
 
-  /* ── Reading time badge ── */
   const timeBadge = document.getElementById('rev-time-badge');
   if (timeBadge) {
     timeBadge.textContent = `${selectedMins} min session`;
     timeBadge.className   = 'badge b-time';
   }
 
-  /* ── Page reference ── */
   document.getElementById('rev-page').textContent = data.pageRef || '';
 
-  /* ── Why this page ── */
   const whyEl = document.getElementById('rev-page-why');
   if (whyEl) whyEl.textContent = data.pageWhy || '';
 
-  /* ── After reading nudge ── */
   const afterEl      = document.getElementById('rev-after-reading');
   const afterBlockEl = document.getElementById('rev-after-reading-block');
   if (afterEl && data.afterReading) {
-    afterEl.textContent          = data.afterReading;
-    afterBlockEl.style.display   = 'block';
+    afterEl.textContent        = data.afterReading;
+    afterBlockEl.style.display = 'block';
   } else if (afterBlockEl) {
     afterBlockEl.style.display = 'none';
   }
 
-  /* ── Custom reflection prompt ── */
   const promptEl = document.getElementById('rev-reflection-prompt');
   if (promptEl) {
     promptEl.textContent = data.reflectionPrompt || 'What does this bring up for you?';
   }
 
-  /* ── Audible link ── */
+  /* Audible link + affiliate click tracking */
   const audibleEl = document.getElementById('rev-audible');
   if (data.format === 'audio') {
     const q = encodeURIComponent((data.title || '') + ' ' + (data.author || ''));
-    audibleEl.href         = `https://www.audible.com/search?keywords=${q}&tag=therightchap-20`;
+    audibleEl.href          = `https://www.audible.com/search?keywords=${q}&tag=therightchap-20`;
     audibleEl.style.display = 'block';
+    audibleEl.onclick       = () => track('audible_click', {
+      book_title:  data.title  || '',
+      book_author: data.author || ''
+    });
   } else {
     audibleEl.style.display = 'none';
   }
 
-  /* ── Mark read — always reset on new session ── */
-  currentSessionMarked    = false;  /* New chapter = fresh mark opportunity */
+  /* Mark read — always reset on new session */
+  currentSessionMarked    = false;
   const markBtn = document.getElementById('rev-mark-btn');
   const doneEl  = document.getElementById('rev-done');
   markBtn.textContent = 'Mark read today';
   markBtn.classList.remove('done');
   doneEl.style.display = 'none';
 
-  /* ── Sample upgrade prompt ── */
   const upgradeEl = document.getElementById('sample-upgrade');
   if (upgradeEl) upgradeEl.style.display = isSampleMode ? 'block' : 'none';
 
-  /* ── Clear reflection textarea ── */
-  document.getElementById('r-text').value          = '';
-  document.getElementById('saved-ok').style.display = 'none';
+  document.getElementById('r-text').value           = '';
+  document.getElementById('saved-ok').style.display  = 'none';
 
-  /* ── Render journal ── */
   renderJournal();
-
   showScreen('screen-reveal');
 }
 
 /* ═══════════════════════════════════════════
    MARK READ
-   currentSessionMarked gates the button per
-   oracle session — resets in renderReveal.
-   markedDates still tracks dates for streak
-   but no longer blocks the button.
 ═══════════════════════════════════════════ */
 function markRead() {
-  if (currentSessionMarked) return; /* Already marked this session */
+  if (currentSessionMarked) return;
   currentSessionMarked = true;
 
-  const td = today();
+  track('mark_read', {
+    book_title:   currentReveal ? currentReveal.title : '',
+    reading_time: selectedMins
+  });
 
-  /* Only update streak logic on the first mark of the day */
+  const td = today();
   if (!appState.markedDates.includes(td)) {
     appState.markedDates.push(td);
     const yest = new Date();
@@ -622,8 +629,6 @@ function markRead() {
 
 /* ═══════════════════════════════════════════
    SAVE REFLECTION
-   Stores as timestamped object with book,
-   page, and prompt — never overwrites.
 ═══════════════════════════════════════════ */
 function saveReflect() {
   const val = document.getElementById('r-text').value.trim();
@@ -644,6 +649,10 @@ function saveReflect() {
   appState.reflections[key] = entry;
   saveState();
 
+  track('reflection_saved', {
+    book_title: currentReveal ? currentReveal.title : ''
+  });
+
   document.getElementById('r-text').value = '';
   const ok = document.getElementById('saved-ok');
   ok.style.display = 'inline';
@@ -654,10 +663,6 @@ function saveReflect() {
 
 /* ═══════════════════════════════════════════
    JOURNAL ACCORDION
-   Supports both old format (date → string)
-   and new format (timestamp → object).
-   Shows: date, book + page, prompt, reflection.
-   Each entry has an inline edit form.
 ═══════════════════════════════════════════ */
 function renderJournal() {
   const el = document.getElementById('journal-list');
@@ -678,7 +683,7 @@ function renderJournal() {
         prompt:  val.prompt  || ''
       };
     })
-    .sort((a, b) => b.key.localeCompare(a.key)); /* Newest first */
+    .sort((a, b) => b.key.localeCompare(a.key));
 
   if (entries.length === 0) {
     el.innerHTML = '<p class="log-empty">No reflections yet. Save one above after your session.</p>';
@@ -729,25 +734,12 @@ function toggleAccordion(btn) {
   btn.classList.toggle('open', !isOpen);
 }
 
-/* ═══════════════════════════════════════════
-   JOURNAL INLINE EDITING
-   startJournalEdit — swaps display text for
-     a pre-filled textarea
-   cancelJournalEdit — restores display text
-   saveJournalEdit — writes updated text to
-     appState, re-renders journal, re-opens
-     the entry so user sees their changes
-═══════════════════════════════════════════ */
 function startJournalEdit(btn) {
   const body     = btn.closest('.accordion-body');
   const textEl   = body.querySelector('.reflection-text');
   const editWrap = body.querySelector('.journal-edit-wrap');
   const textarea = editWrap.querySelector('textarea');
-
-  /* Pre-fill textarea with current text */
-  textarea.value = textEl.textContent;
-
-  /* Swap display → edit mode */
+  textarea.value         = textEl.textContent;
   textEl.style.display   = 'none';
   btn.style.display      = 'none';
   editWrap.style.display = 'block';
@@ -760,8 +752,6 @@ function cancelJournalEdit(btn) {
   const textEl   = body.querySelector('.reflection-text');
   const editWrap = body.querySelector('.journal-edit-wrap');
   const editBtn  = body.querySelector('.journal-edit-btn');
-
-  /* Swap edit → display mode */
   textEl.style.display   = '';
   editWrap.style.display = 'none';
   editBtn.style.display  = '';
@@ -774,16 +764,14 @@ function saveJournalEdit(btn) {
   const newText  = textarea.value.trim();
   if (!newText) return;
 
-  /* Update the stored entry — preserves all other fields */
   const existing = appState.reflections[key];
   appState.reflections[key] = (typeof existing === 'string')
     ? newText
     : { ...existing, text: newText };
 
   saveState();
-  renderJournal(); /* Re-render the whole journal */
+  renderJournal();
 
-  /* Re-open the entry the user was editing so they see the result */
   const updated = document.querySelector(`[data-key="${key}"]`);
   if (updated) {
     const header = updated.querySelector('.accordion-header');
@@ -798,21 +786,14 @@ function saveJournalEdit(btn) {
 
 /* ═══════════════════════════════════════════
    SESSION LOG
-   Sessions + minutes always count (personal
-   and sample mode). Streak and log only update
-   for personal shelf sessions.
-   renderStats() called immediately so numbers
-   update without needing to navigate away.
 ═══════════════════════════════════════════ */
 function logSession(data) {
   const now = new Date();
   const td  = today();
 
-  /* Always increment — every "Find my chapter" press counts */
   appState.sessions++;
   appState.mins += selectedMins;
 
-  /* Streak and log only for personal shelf */
   if (!isSampleMode) {
     if (appState.lastDate !== td) {
       const yest = new Date();
@@ -840,7 +821,7 @@ function logSession(data) {
   }
 
   saveState();
-  renderStats(); /* Update immediately — don't wait for Ask Again */
+  renderStats();
 }
 
 /* ═══════════════════════════════════════════
