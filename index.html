@@ -77,19 +77,28 @@
 
   <!-- ══════════════════════════════════════
        SCREEN: ORACLE INTAKE
+       V1-style intro above the input card
   ══════════════════════════════════════ -->
   <div class="screen" id="screen-oracle" style="display:none">
     <header class="rr-head">
       <h1>The Right Chapter</h1>
-      <p id="oracle-shelf-label">Your shelf</p>
+      <p id="oracle-shelf-label">The right chapter, right now.</p>
     </header>
+
+    <!-- V1-style intro — the emotional hook above the card -->
+    <div class="oracle-intro">
+      <p class="oracle-intro-headline">There is a chapter that was written for this moment.</p>
+      <p class="oracle-intro-sub">Not for everyone. For you. For today.</p>
+      <p class="oracle-intro-copy">Type or speak what you are carrying right now.<br>The right chapter will appear.</p>
+    </div>
+
+    <!-- Input card -->
     <div class="oracle-card">
       <p class="oracle-question">What are you carrying right now?</p>
-      <p class="oracle-helper">Write freely. A feeling, a situation, something you can't quite name. The oracle reads between the lines.</p>
       <div class="oracle-input-wrap">
         <textarea
           id="oracle-input"
-          placeholder="A rough morning. A decision I keep avoiding. Something I can't shake."
+          placeholder="A few honest words is enough…"
           aria-label="What you are carrying"
           maxlength="500"
         ></textarea>
@@ -100,6 +109,7 @@
         My shelf (<span id="oracle-shelf-count">0</span> books)
       </button>
     </div>
+
     <div class="stats-row" id="oracle-stats" aria-label="Reading stats" style="display:none">
       <div class="stat">
         <div class="stat-n" id="s-streak">0</div>
@@ -132,6 +142,16 @@
 
   <!-- ══════════════════════════════════════
        SCREEN: REVEAL CARD
+       Structure (top to bottom):
+       1. oracle-speaks-card  — the 3-part oracle message
+       2. result-card         — book title, author, badges
+       3. page-box            — big page number
+       4. rev-page-note       — "Around page X, you'll find…"
+       5. after-reading-card  — specific actionable nudge
+       6. mark read + ask again buttons
+       7. reflection section  — custom prompt + textarea
+       8. what's next buttons
+       9. sample prompt (sample mode only)
   ══════════════════════════════════════ -->
   <div class="screen" id="screen-reveal" style="display:none">
     <header class="rr-head">
@@ -139,19 +159,13 @@
       <p>The oracle speaks</p>
     </header>
 
-    <!--
-      ORACLE MESSAGE — its own card, rendered FIRST before the book.
-      This is the three-part oracle message (what you see / why this book / how to enter).
-    -->
+    <!-- 1. Oracle message — its own card, comes FIRST -->
     <section class="oracle-speaks-card" aria-live="polite">
       <div class="oracle-label">✦ &nbsp;The oracle speaks</div>
       <div class="oracle-message" id="rev-oracle-msg"></div>
     </section>
 
-    <!--
-      BOOK REVEAL CARD — the book title, author, page, and summary.
-      Comes after the oracle message, not before.
-    -->
+    <!-- 2. Book reveal card — title, author, format badge -->
     <section class="result-card visible" id="reveal-card">
       <div class="book-title" id="rev-title"></div>
       <div class="book-author" id="rev-author"></div>
@@ -159,27 +173,39 @@
         <span class="badge b-format" id="rev-format-badge"></span>
         <span class="badge b-done" id="rev-done" style="display:none">Marked read today ✓</span>
       </div>
-      <div class="page-box">
-        <div class="page-num" id="rev-page"></div>
-        <div class="page-sub" id="rev-page-sub"></div>
-        <!--
-          Summary — one crisp sentence that distills what this reading offers.
-          Sits below the page number. Populated from the oracle's summary field.
-        -->
-        <div class="page-note" id="rev-summary" style="display:none"></div>
-      </div>
-      <a class="audible-link" id="rev-audible" href="#" target="_blank" rel="noopener" style="display:none">
-        Listen on Audible →
-      </a>
-      <div class="btn-row">
-        <button type="button" class="rr-btn mark-btn" id="rev-mark-btn">Mark read today</button>
-      </div>
     </section>
+
+    <!-- 3. Page box — stands alone as its own card -->
+    <div class="page-box">
+      <div class="page-num" id="rev-page"></div>
+      <div class="page-sub" id="rev-page-sub">Suggested starting point</div>
+    </div>
+
+    <!-- 4. Page note — italic explanation of WHY that page -->
+    <div class="rev-page-note" id="rev-page-note" style="display:none"></div>
+
+    <!-- 5. After reading card — specific actionable nudge -->
+    <div class="after-reading-card" id="rev-after-reading" style="display:none">
+      <div class="after-reading-label">After reading</div>
+      <div class="after-reading-text" id="rev-after-reading-text"></div>
+    </div>
+
+    <!-- 6. Primary action buttons -->
+    <div class="btn-row" style="margin-bottom: 0.5rem">
+      <button type="button" class="rr-btn mark-btn" id="rev-mark-btn">Mark read today</button>
+      <button type="button" class="rr-btn" id="ask-again-btn">Ask again</button>
+    </div>
+
+    <!-- Audible link — only shown for audio format -->
+    <a class="audible-link" id="rev-audible" href="#" target="_blank" rel="noopener" style="display:none">
+      Listen on Audible →
+    </a>
 
     <div class="divider" aria-hidden="true"><span>reflection</span></div>
 
+    <!-- 7. Reflection section — custom prompt per session -->
     <section class="reflect-card" aria-label="Reflection">
-      <div class="card-head">What does this bring up for you?</div>
+      <div class="card-head" id="r-prompt">What does this bring up for you?</div>
       <textarea id="r-text" placeholder="Write a few thoughts after your session…" aria-label="Reflection notes"></textarea>
       <div style="display:flex;align-items:center;gap:12px;">
         <button type="button" class="save-btn" id="save-reflect-btn">Save reflection</button>
@@ -189,12 +215,12 @@
 
     <div class="divider" aria-hidden="true"><span>what's next</span></div>
 
+    <!-- 8. Secondary nav buttons -->
     <div class="btn-row">
-      <button type="button" class="rr-btn" id="ask-again-btn">Ask the oracle again</button>
       <button type="button" class="rr-btn" id="reveal-edit-shelf-btn">Edit my shelf</button>
     </div>
 
-    <!-- SAMPLE MODE PROMPT — shown only when isSampleMode === true -->
+    <!-- 9. Sample mode prompt — hidden unless isSampleMode === true -->
     <div id="sample-shelf-prompt" style="display:none">
       <div class="divider" aria-hidden="true"><span>make it yours</span></div>
       <div class="sample-prompt-card">
