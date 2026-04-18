@@ -40,8 +40,13 @@ const SAMPLE_SHELF = [
 ═══════════════════════════════════════════ */
 function track(eventName, params = {}) {
   try {
+    /* Push to dataLayer for GTM */
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ event: eventName, ...params });
+    /* Also call gtag() directly — works with Google Tag setup in GTM */
+    if (typeof gtag === 'function') {
+      gtag('event', eventName, params);
+    }
   } catch (_) { /* Never let tracking break the app */ }
 }
 
