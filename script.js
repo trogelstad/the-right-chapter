@@ -245,9 +245,11 @@ function wireButtons() {
   document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
 
   /* REVEAL — share buttons */
-  document.getElementById('share-copy').addEventListener('click', () => shareReveal('copy'));
-  document.getElementById('share-sms').addEventListener('click',  () => shareReveal('sms'));
-  document.getElementById('share-twitter').addEventListener('click', () => shareReveal('twitter'));
+  document.getElementById('share-copy').addEventListener('click',     () => shareReveal('copy'));
+  document.getElementById('share-sms').addEventListener('click',      () => shareReveal('sms'));
+  document.getElementById('share-whatsapp').addEventListener('click', () => shareReveal('whatsapp'));
+  document.getElementById('share-facebook').addEventListener('click', () => shareReveal('facebook'));
+  document.getElementById('share-twitter').addEventListener('click',  () => shareReveal('twitter'));
 
   /* REVEAL — edit shelf */
   document.getElementById('reveal-edit-shelf-btn').addEventListener('click', () => {
@@ -647,7 +649,7 @@ function shareReveal(channel) {
   const title   = currentReveal ? currentReveal.title   : 'a book on my shelf';
   const pageRef = currentReveal ? currentReveal.pageRef : '';
   const page    = pageRef ? ` · ${pageRef}` : '';
-  const text    = `The Right Chapter Found the perfect inspiration for me today! ${title}${page}. Exactly what I needed today. therightchapter.com`;
+  const text    = `The oracle sent me to ${title}${page}. Exactly what I needed today. therightchapter.com`;
   const url     = 'https://therightchapter.com';
 
   track('share', { channel, book_title: title });
@@ -664,6 +666,12 @@ function shareReveal(channel) {
   } else if (channel === 'sms') {
     const encoded = encodeURIComponent(text);
     window.open(`sms:?body=${encoded}`, '_blank');
+  } else if (channel === 'whatsapp') {
+    const encoded = encodeURIComponent(text);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  } else if (channel === 'facebook') {
+    const encoded = encodeURIComponent('https://therightchapter.com');
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encoded}`, '_blank');
   } else if (channel === 'twitter') {
     const encoded = encodeURIComponent(text);
     window.open(`https://twitter.com/intent/tweet?text=${encoded}`, '_blank');
