@@ -3602,3 +3602,49 @@ textarea::placeholder { color: var(--ink-4); }
 }
 
 .journal-cancel-btn:hover { color: var(--ink); }
+
+/* ── Share row ── */
+.share-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0.75rem 0 1.25rem;
+  flex-wrap: wrap;
+}
+.share-label {
+  font-size: 11px;
+  color: var(--ink-4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.share-btns {
+  display: flex;
+  gap: 8px;
+}
+.share-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line-med);
+  background: var(--card);
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s, border-color 0.14s;
+  box-shadow: var(--sh-xs);
+}
+.share-btn:hover {
+  background: var(--plum-tint);
+  color: var(--plum);
+  border-color: var(--plum-ring);
+}
+.share-copied {
+  font-size: 12px;
+  color: var(--sage);
+  font-weight: 500;
+}
+
