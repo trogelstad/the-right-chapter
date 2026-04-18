@@ -657,6 +657,7 @@ function saveReflect() {
    Supports both old format (date → string)
    and new format (timestamp → object).
    Shows: date, book + page, prompt, reflection.
+   Each entry has an inline edit form.
 ═══════════════════════════════════════════ */
 function renderJournal() {
   const el = document.getElementById('journal-list');
@@ -695,7 +696,7 @@ function renderJournal() {
       ? `<p class="journal-prompt">${escHtml(entry.prompt)}</p>`
       : '';
     return `
-      <div class="accordion-entry">
+      <div class="accordion-entry" data-key="${escHtml(entry.key)}">
         <button type="button" class="accordion-header" aria-expanded="false" onclick="toggleAccordion(this)">
           <div class="accordion-meta">
             <span class="accordion-date">${label}</span>
@@ -706,6 +707,14 @@ function renderJournal() {
         <div class="accordion-body" hidden>
           ${promptLine}
           <p class="reflection-text">${escHtml(entry.text)}</p>
+          <div class="journal-edit-wrap" style="display:none">
+            <textarea class="journal-edit-textarea" aria-label="Edit reflection"></textarea>
+            <div class="journal-edit-btns">
+              <button type="button" class="save-btn" onclick="saveJournalEdit(this)">Save changes</button>
+              <button type="button" class="journal-cancel-btn" onclick="cancelJournalEdit(this)">Cancel</button>
+            </div>
+          </div>
+          <button type="button" class="journal-edit-btn" onclick="startJournalEdit(this)">Edit entry</button>
         </div>
       </div>
     `;
@@ -718,6 +727,73 @@ function toggleAccordion(btn) {
   body.hidden  = isOpen;
   btn.setAttribute('aria-expanded', String(!isOpen));
   btn.classList.toggle('open', !isOpen);
+}
+
+/* ═══════════════════════════════════════════
+   JOURNAL INLINE EDITING
+   startJournalEdit — swaps display text for
+     a pre-filled textarea
+   cancelJournalEdit — restores display text
+   saveJournalEdit — writes updated text to
+     appState, re-renders journal, re-opens
+     the entry so user sees their changes
+═══════════════════════════════════════════ */
+function startJournalEdit(btn) {
+  const body     = btn.closest('.accordion-body');
+  const textEl   = body.querySelector('.reflection-text');
+  const editWrap = body.querySelector('.journal-edit-wrap');
+  const textarea = editWrap.querySelector('textarea');
+
+  /* Pre-fill textarea with current text */
+  textarea.value = textEl.textContent;
+
+  /* Swap display → edit mode */
+  textEl.style.display   = 'none';
+  btn.style.display      = 'none';
+  editWrap.style.display = 'block';
+  textarea.focus();
+  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+}
+
+function cancelJournalEdit(btn) {
+  const body     = btn.closest('.accordion-body');
+  const textEl   = body.querySelector('.reflection-text');
+  const editWrap = body.querySelector('.journal-edit-wrap');
+  const editBtn  = body.querySelector('.journal-edit-btn');
+
+  /* Swap edit → display mode */
+  textEl.style.display   = '';
+  editWrap.style.display = 'none';
+  editBtn.style.display  = '';
+}
+
+function saveJournalEdit(btn) {
+  const entryEl  = btn.closest('.accordion-entry');
+  const key      = entryEl.dataset.key;
+  const textarea = btn.closest('.accordion-body').querySelector('.journal-edit-textarea');
+  const newText  = textarea.value.trim();
+  if (!newText) return;
+
+  /* Update the stored entry — preserves all other fields */
+  const existing = appState.reflections[key];
+  appState.reflections[key] = (typeof existing === 'string')
+    ? newText
+    : { ...existing, text: newText };
+
+  saveState();
+  renderJournal(); /* Re-render the whole journal */
+
+  /* Re-open the entry the user was editing so they see the result */
+  const updated = document.querySelector(`[data-key="${key}"]`);
+  if (updated) {
+    const header = updated.querySelector('.accordion-header');
+    const body   = updated.querySelector('.accordion-body');
+    if (header && body) {
+      body.hidden = false;
+      header.setAttribute('aria-expanded', 'true');
+      header.classList.add('open');
+    }
+  }
 }
 
 /* ═══════════════════════════════════════════
