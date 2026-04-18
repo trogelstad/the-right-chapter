@@ -244,6 +244,11 @@ function wireButtons() {
   /* REVEAL — reflection */
   document.getElementById('save-reflect-btn').addEventListener('click', saveReflect);
 
+  /* REVEAL — share buttons */
+  document.getElementById('share-copy').addEventListener('click', () => shareReveal('copy'));
+  document.getElementById('share-sms').addEventListener('click',  () => shareReveal('sms'));
+  document.getElementById('share-twitter').addEventListener('click', () => shareReveal('twitter'));
+
   /* REVEAL — edit shelf */
   document.getElementById('reveal-edit-shelf-btn').addEventListener('click', () => {
     editReturnScreen = 'screen-reveal';
@@ -630,6 +635,39 @@ function markRead() {
   document.getElementById('rev-mark-btn').textContent = 'Read today ✓';
   document.getElementById('rev-mark-btn').classList.add('done');
   document.getElementById('rev-done').style.display   = 'inline';
+}
+
+/* ═══════════════════════════════════════════
+   SHARE
+   Generates a personal share message using
+   the current oracle result. Three channels:
+   copy to clipboard, SMS, Twitter/X.
+═══════════════════════════════════════════ */
+function shareReveal(channel) {
+  const title   = currentReveal ? currentReveal.title   : 'a book on my shelf';
+  const pageRef = currentReveal ? currentReveal.pageRef : '';
+  const page    = pageRef ? ` · ${pageRef}` : '';
+  const text    = `The oracle sent me to ${title}${page}. Exactly what I needed today. therightchapter.com`;
+  const url     = 'https://therightchapter.com';
+
+  track('share', { channel, book_title: title });
+
+  if (channel === 'copy') {
+    navigator.clipboard.writeText(`${text}`).then(() => {
+      const copied = document.getElementById('share-copied');
+      copied.style.display = 'inline';
+      setTimeout(() => { copied.style.display = 'none'; }, 2200);
+    }).catch(() => {
+      /* Fallback for older browsers */
+      prompt('Copy this link:', text);
+    });
+  } else if (channel === 'sms') {
+    const encoded = encodeURIComponent(text);
+    window.open(`sms:?body=${encoded}`, '_blank');
+  } else if (channel === 'twitter') {
+    const encoded = encodeURIComponent(text);
+    window.open(`https://twitter.com/intent/tweet?text=${encoded}`, '_blank');
+  }
 }
 
 /* ═══════════════════════════════════════════
