@@ -11,7 +11,362 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="The Right Chapter" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192.png" />
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Right Chapter</title>
+  <meta name="description" content="The book you need is already on your shelf." />
+  <meta name="theme-color" content="#3b2f6e" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="The Right Chapter" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/og-image-favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+   <!-- Open Graph / Social Preview -->
+  <meta property="og:title" content="The Right Chapter" />
+  <meta property="og:description" content="The book you need is already on your shelf. Tell us what you're carrying — we'll find your chapter." />
+  <meta property="og:image" content="https://therightchapter.com/og-image.png" />
+  <meta property="og:url" content="https://therightchapter.com" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter/X card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="The Right Chapter" />
+  <meta name="twitter:description" content="The book you need is already on your shelf." />
+  <meta name="twitter:image" content="https://therightchapter.com/og-image.png" />
+
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-M66G2LRT');</script>
+  <!-- End Google Tag Manager -->
+</head>
+<body>
+
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M66G2LRT"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Theme toggle — fixed top right, visible on all screens -->
+  <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<main class="rr" role="main">
+
+  <!-- ══════════════════════════════════════
+       SCREEN: LANDING
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-landing">
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>The oracle · Find your page</p>
+    </header>
+    <div class="landing-card">
+      <p class="landing-headline">The book you need is already on your shelf.</p>
+      <p class="landing-sub">Tell us what you're carrying. We'll find your chapter.</p>
+      <button type="button" class="spin-btn" id="landing-cta">Find my chapter →</button>
+      <p class="landing-micro">No account needed · Uses only the books you own</p>
+      <div class="landing-divider">or</div>
+      <button type="button" class="sample-btn" id="sample-cta">Try it with a sample shelf</button>
+      <p class="landing-micro">Experience the oracle instantly — no setup required</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN: SHELF SETUP
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-shelf-setup" style="display:none">
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>Build your shelf</p>
+    </header>
+    <div class="setup-intro">
+      <p class="setup-headline">What's on your shelf?</p>
+      <p class="setup-sub">Add 3 to 5 books you own, have nearby, or can listen to right now. The oracle will only ever draw from these.</p>
+    </div>
+    <div id="book-rows"></div>
+    <button type="button" class="add-book-btn" id="add-book-btn">+ Add another book</button>
+    <div class="shelf-progress" id="shelf-progress"></div>
+    <button type="button" class="spin-btn" id="shelf-confirm-btn" disabled>My shelf is ready →</button>
+    <p class="landing-micro">You can edit your shelf anytime</p>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN: SHELF CONFIRMATION
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-shelf-confirm" style="display:none">
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>Your shelf is ready</p>
+    </header>
+    <div class="confirm-card">
+      <p class="confirm-headline">Your shelf is ready.</p>
+      <p class="confirm-sub">The oracle will draw only from these books. Your chapter is waiting.</p>
+      <div id="shelf-display"></div>
+      <button type="button" class="spin-btn" id="confirm-oracle-btn">Ask the oracle →</button>
+      <button type="button" class="text-link" id="confirm-edit-btn">Edit my shelf</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN: ORACLE INTAKE
+       V1-style: intro above the card,
+       time selector inside the card,
+       mic button in the textarea
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-oracle" style="display:none">
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p id="oracle-shelf-label">The right chapter, right now.</p>
+    </header>
+
+    <!-- Sample mode banner -->
+    <div class="sample-banner" id="sample-banner" style="display:none">
+      <span>You're using the sample shelf.</span>
+      <button type="button" class="sample-banner-link" id="sample-add-shelf-btn">Add your own books →</button>
+    </div>
+
+    <!-- V1-style emotional intro above the card -->
+    <div class="oracle-intro">
+      <p class="oracle-intro-headline">There is a chapter that was written for this moment.</p>
+      <p class="oracle-intro-sub">Not for everyone. For you. For today.</p>
+      <p class="oracle-intro-copy">Type or speak what you are carrying right now.<br>The right chapter will appear.</p>
+    </div>
+
+    <!-- Oracle input card -->
+    <div class="oracle-card">
+      <p class="oracle-question">What are you carrying right now?</p>
+
+      <div class="oracle-input-wrap">
+        <textarea
+          id="oracle-input"
+          placeholder="A few honest words is enough…"
+          aria-label="What you are carrying"
+          maxlength="500"
+        ></textarea>
+        <!-- Mic button injected here by JS if Web Speech API is supported -->
+        <span class="char-count" id="char-count"></span>
+      </div>
+
+      <!-- Time selector -->
+      <div class="time-selector">
+        <div class="time-label-row">
+          <span class="time-label">How long do you have to read?</span>
+        </div>
+        <div class="time-pills" id="time-pills">
+          <button type="button" class="time-pill on" data-mins="10">10 min</button>
+          <button type="button" class="time-pill" data-mins="20">20 min</button>
+          <button type="button" class="time-pill" data-mins="30">30 min</button>
+        </div>
+      </div>
+
+      <button type="button" class="spin-btn" id="oracle-submit-btn" disabled>Find my chapter →</button>
+
+      <button type="button" class="text-link shelf-link" id="oracle-edit-shelf-btn">
+        My shelf (<span id="oracle-shelf-count">0</span> books)
+      </button>
+    </div>
+
+    <!-- Stats row — always visible when oracle screen is active -->
+    <div class="stats-row" id="oracle-stats" aria-label="Reading stats">
+      <div class="stat">
+        <div class="stat-n" id="s-streak">0</div>
+        <div class="stat-l">Day streak</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" id="s-sess">0</div>
+        <div class="stat-l">Sessions</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" id="s-mins">0</div>
+        <div class="stat-l">Minutes read</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN: LOADING
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-loading" style="display:none">
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>The oracle is listening</p>
+    </header>
+    <div class="loading-card">
+      <div class="loading-glyph" aria-hidden="true">✦</div>
+      <p class="loading-msg" id="loading-msg">Reading what you brought…</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN: REVEAL
+       Order (top to bottom):
+       1. oracle-speaks-card  — pull quote + body text
+       2. result-card         — book title, author, badges
+       3. page-box            — big page number
+       4. oracle-why          — "Around page X, you'll find…"
+       5. oracle-step-block   — "After reading" nudge
+       6. mark read + ask again
+       7. sample upgrade (sample mode only)
+       8. reflection (custom prompt + textarea)
+       9. journal accordion
+       10. what's next
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-reveal" style="display:none">
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>The oracle speaks</p>
+    </header>
+
+    <!-- 1. Oracle message — split into pull quote + body -->
+    <section class="oracle-speaks-card" aria-live="polite">
+      <div class="oracle-label">✦ &nbsp;The oracle speaks</div>
+      <div id="rev-oracle-msg"></div>
+    </section>
+
+    <!-- 2. Book reveal card -->
+    <section class="result-card visible" id="reveal-card">
+      <div class="book-title" id="rev-title"></div>
+      <div class="book-author" id="rev-author"></div>
+      <div class="badges">
+        <span class="badge b-format" id="rev-format-badge"></span>
+        <span class="badge b-time" id="rev-time-badge"></span>
+        <span class="badge b-done" id="rev-done" style="display:none">Marked read today ✓</span>
+      </div>
+    </section>
+
+    <!-- 3. Page box — standalone card -->
+    <div class="page-box">
+      <div class="page-num" id="rev-page"></div>
+      <div class="page-sub">Suggested starting point</div>
+    </div>
+
+    <!-- 4. Why this page — italic with left border -->
+    <p class="oracle-why" id="rev-page-why"></p>
+
+    <!-- 5. After reading nudge -->
+    <div class="oracle-step-block" id="rev-after-reading-block" style="display:none">
+      <div class="oracle-step-label">After reading</div>
+      <div class="oracle-step" id="rev-after-reading"></div>
+    </div>
+
+    <!-- Audible link (audio format only) -->
+    <a class="audible-link" id="rev-audible" href="#" target="_blank" rel="noopener" style="display:none">
+      Listen on Audible →
+    </a>
+
+    <!-- 6. Primary action buttons -->
+    <div class="btn-row">
+      <button type="button" class="rr-btn mark-btn" id="rev-mark-btn">Mark read today</button>
+      <button type="button" class="rr-btn" id="ask-again-btn">Ask again</button>
+    </div>
+
+    <!-- Share row -->
+    <div class="share-row" id="share-row">
+      <span class="share-label">Share this moment</span>
+      <div class="share-btns">
+        <button type="button" class="share-btn" id="share-copy" title="Copy link">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>Copy</span>
+        </button>
+        <button type="button" class="share-btn" id="share-sms" title="Share via SMS">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Text</span>
+        </button>
+        <button type="button" class="share-btn" id="share-whatsapp" title="Share on WhatsApp">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+          <span>WhatsApp</span>
+        </button>
+        <button type="button" class="share-btn" id="share-facebook" title="Share on Facebook">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          <span>Facebook</span>
+        </button>
+        <button type="button" class="share-btn" id="share-twitter" title="Share on X">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          <span>Post</span>
+        </button>
+      </div>
+      <span class="share-copied" id="share-copied" style="display:none">Copied ✓</span>
+    </div>
+
+    <!-- 7. Sample mode upgrade prompt -->
+    <div class="sample-upgrade" id="sample-upgrade" style="display:none">
+      <p class="sample-upgrade-text">Want the oracle to use <em>your</em> books?</p>
+      <button type="button" class="spin-btn" id="sample-upgrade-btn">Add my own shelf →</button>
+      <p class="landing-micro">Your session data will be kept</p>
+    </div>
+
+    <!-- 8. Reflection section -->
+    <div class="divider" aria-hidden="true"><span>reflection</span></div>
+    <section class="reflect-card" aria-label="Reflection">
+      <div class="card-head" id="rev-reflection-prompt">What does this bring up for you?</div>
+      <div class="oracle-input-wrap">
+        <textarea id="r-text" placeholder="Write a few thoughts after your session…" aria-label="Reflection notes"></textarea>
+        <!-- Mic button for reflection also injected by JS -->
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button type="button" class="save-btn" id="save-reflect-btn">Save reflection</button>
+        <span class="saved-ok" id="saved-ok" aria-live="polite" style="display:none">Saved ✓</span>
+      </div>
+    </section>
+
+    <!-- 9. Journal accordion -->
+    <div class="divider" aria-hidden="true"><span>journal</span></div>
+    <section class="log-card" aria-label="Reflection journal">
+      <div class="card-head">Your reflections</div>
+      <div id="journal-list">
+        <p class="log-empty">No reflections yet. Save one above after your session.</p>
+      </div>
+    </section>
+
+    <!-- 10. What's next -->
+    <div class="divider" aria-hidden="true"><span>what's next</span></div>
+    <div class="btn-row">
+      <button type="button" class="rr-btn" id="reveal-edit-shelf-btn">Edit my shelf</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SCREEN: EDIT SHELF
+  ══════════════════════════════════════ -->
+  <div class="screen" id="screen-edit-shelf" style="display:none">
+    <header class="rr-head">
+      <h1>The Right Chapter</h1>
+      <p>Edit your shelf</p>
+    </header>
+    <div class="setup-intro">
+      <p class="setup-headline">Your shelf</p>
+      <p class="setup-sub">Keep at least 3 books. Changes take effect immediately.</p>
+    </div>
+    <div id="edit-book-rows"></div>
+    <button type="button" class="add-book-btn" id="edit-add-book-btn">+ Add another book</button>
+    <div class="shelf-progress" id="edit-shelf-progress"></div>
+    <div class="btn-row" style="margin-top:1.5rem">
+      <button type="button" class="spin-btn" id="edit-save-btn" disabled>Save changes →</button>
+      <button type="button" class="rr-btn" id="edit-cancel-btn">Cancel</button>
+    </div>
+  </div>
+
+</main>
+
+<script src="script.js?v=7"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" />
